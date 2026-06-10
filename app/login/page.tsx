@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { AuthShell, Field } from "@/components/auth";
 
 function GoogleIcon() {
   return (
@@ -38,91 +39,95 @@ function LoginForm() {
         redirect: false,
       });
       if (res?.error) {
-        setError("Email hoac mat khau khong dung. Vui long thu lai.");
+        setError("Email hoặc mật khẩu không đúng. Vui lòng thử lại.");
       } else {
         router.push(callbackUrl);
         router.refresh();
       }
     } catch {
-      setError("Co loi xay ra. Kiem tra ket noi mang.");
+      setError("Có lỗi xảy ra. Kiểm tra kết nối mạng.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center px-4 py-10">
-      {/* Logo + ten ung dung */}
-      <div className="mb-8 text-center">
-        <div className="text-5xl">🎓</div>
-        <h1 className="mt-2 text-2xl font-bold">English Learning App</h1>
-        <p className="text-sm text-gray-500">Hoc tu vung theo chu de</p>
+    <AuthShell>
+      <div className="mb-8 text-center animate-fade-down">
+        <div className="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-2xl bg-brand-gradient text-3xl shadow-glow animate-float">
+          🎓
+        </div>
+        <h1 className="text-2xl font-extrabold text-gradient">English Learning App</h1>
+        <p className="mt-1 text-sm text-gray-500">Học từ vựng theo chủ đề</p>
       </div>
 
       {verify === "ok" && (
-        <p className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
-          Email da duoc xac minh. Moi ban dang nhap.
+        <p className="mb-4 animate-scale-in rounded-xl bg-emerald-50 p-3 text-sm font-medium text-emerald-700 ring-1 ring-emerald-200">
+          ✅ Email đã được xác minh. Mời bạn đăng nhập.
         </p>
       )}
       {verify === "invalid" && (
-        <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-          Link xac minh khong hop le hoac da het han.
+        <p className="mb-4 animate-scale-in rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700 ring-1 ring-red-200">
+          ⚠ Link xác minh không hợp lệ hoặc đã hết hạn.
         </p>
       )}
 
-      {/* Nut Google — noi bat */}
+      {/* Nút Google */}
       <button
         onClick={() => signIn("google", { callbackUrl })}
         disabled={loading}
-        className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 font-medium shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 font-semibold shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md disabled:opacity-50"
       >
         <GoogleIcon />
-        Tiep tuc voi Google
+        Tiếp tục với Google
       </button>
 
       <div className="my-6 flex items-center gap-3 text-sm text-gray-400">
-        <div className="h-px flex-1 bg-gray-200" /> hoac <div className="h-px flex-1 bg-gray-200" />
+        <div className="h-px flex-1 bg-gray-200" /> hoặc <div className="h-px flex-1 bg-gray-200" />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        <input
+        <Field
           type="email"
-          required
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={loading}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-brand-500 disabled:bg-gray-100"
-        />
-        <input
-          type="password"
           required
-          minLength={8}
-          placeholder="Mat khau"
+        />
+        <Field
+          type="password"
+          placeholder="Mật khẩu"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={loading}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-brand-500 disabled:bg-gray-100"
+          minLength={8}
+          required
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && (
+          <p className="animate-scale-in rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+            {error}
+          </p>
+        )}
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-brand-600 px-4 py-3 font-medium text-white transition hover:bg-brand-700 disabled:opacity-50"
+          className="btn-gradient flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white disabled:opacity-60"
         >
-          {loading ? "Dang xu ly..." : "Dang nhap"}
+          {loading && <span className="h-4 w-4 animate-spin-slow rounded-full border-2 border-white/40 border-t-white" />}
+          {loading ? "Đang xử lý..." : "Đăng nhập"}
         </button>
       </form>
 
-      <div className="mt-4 flex items-center justify-between text-sm">
-        <Link href="/forgot-password" className="text-brand-600 hover:underline">
-          Quen mat khau?
+      <div className="mt-5 flex items-center justify-between text-sm">
+        <Link href="/forgot-password" className="font-medium text-brand-600 hover:underline">
+          Quên mật khẩu?
         </Link>
-        <Link href="/register" className="text-brand-600 hover:underline">
-          Chua co tai khoan? Dang ky ngay
+        <Link href="/register" className="font-medium text-brand-600 hover:underline">
+          Chưa có tài khoản? Đăng ký ngay
         </Link>
       </div>
-    </div>
+    </AuthShell>
   );
 }
 

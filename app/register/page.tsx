@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { AuthShell, Field } from "@/components/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,11 +22,11 @@ export default function RegisterPage() {
     setError("");
 
     if (form.password !== form.confirmPassword) {
-      setError("Mat khau xac nhan khong khop");
+      setError("Mật khẩu xác nhận không khớp");
       return;
     }
     if (form.password.length < 8) {
-      setError("Mat khau toi thieu 8 ky tu");
+      setError("Mật khẩu tối thiểu 8 ký tự");
       return;
     }
 
@@ -38,10 +39,10 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Co loi xay ra");
+        setError(data.error ?? "Có lỗi xảy ra");
         return;
       }
-      // Tu dong dang nhap sau dang ky (muc 11.3 BA doc)
+      // Tự động đăng nhập sau đăng ký (mục 11.3 BA doc)
       await signIn("credentials", {
         email: form.email,
         password: form.password,
@@ -50,39 +51,44 @@ export default function RegisterPage() {
       router.push("/");
       router.refresh();
     } catch {
-      setError("Co loi xay ra. Kiem tra ket noi mang.");
+      setError("Có lỗi xảy ra. Kiểm tra kết nối mạng.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center px-4 py-10">
-      <div className="mb-8 text-center">
-        <div className="text-5xl">🎓</div>
-        <h1 className="mt-2 text-2xl font-bold">Tao tai khoan</h1>
+    <AuthShell>
+      <div className="mb-8 text-center animate-fade-down">
+        <div className="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-2xl bg-brand-gradient text-3xl shadow-glow animate-float">
+          🎓
+        </div>
+        <h1 className="text-2xl font-extrabold">Tạo tài khoản</h1>
+        <p className="mt-1 text-sm text-gray-500">Bắt đầu hành trình học từ vựng của bạn</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        <input type="text" required placeholder="Ho ten" value={form.name} onChange={set("name")} disabled={loading}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-brand-500 disabled:bg-gray-100" />
-        <input type="email" required placeholder="Email" value={form.email} onChange={set("email")} disabled={loading}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-brand-500 disabled:bg-gray-100" />
-        <input type="password" required minLength={8} placeholder="Mat khau (toi thieu 8 ky tu)" value={form.password} onChange={set("password")} disabled={loading}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-brand-500 disabled:bg-gray-100" />
-        <input type="password" required placeholder="Xac nhan mat khau" value={form.confirmPassword} onChange={set("confirmPassword")} disabled={loading}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-brand-500 disabled:bg-gray-100" />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button type="submit" disabled={loading}
-          className="w-full rounded-lg bg-brand-600 px-4 py-3 font-medium text-white transition hover:bg-brand-700 disabled:opacity-50">
-          {loading ? "Dang xu ly..." : "Dang ky"}
+        <Field type="text" required placeholder="Họ tên" value={form.name} onChange={set("name")} disabled={loading} />
+        <Field type="email" required placeholder="Email" value={form.email} onChange={set("email")} disabled={loading} />
+        <Field type="password" required minLength={8} placeholder="Mật khẩu (tối thiểu 8 ký tự)" value={form.password} onChange={set("password")} disabled={loading} />
+        <Field type="password" required placeholder="Xác nhận mật khẩu" value={form.confirmPassword} onChange={set("confirmPassword")} disabled={loading} />
+        {error && (
+          <p className="animate-scale-in rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+        )}
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-gradient flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white disabled:opacity-60"
+        >
+          {loading && <span className="h-4 w-4 animate-spin-slow rounded-full border-2 border-white/40 border-t-white" />}
+          {loading ? "Đang xử lý..." : "Đăng ký"}
         </button>
       </form>
 
-      <p className="mt-4 text-center text-sm">
-        Da co tai khoan?{" "}
-        <Link href="/login" className="text-brand-600 hover:underline">Dang nhap</Link>
+      <p className="mt-5 text-center text-sm text-gray-600">
+        Đã có tài khoản?{" "}
+        <Link href="/login" className="font-medium text-brand-600 hover:underline">Đăng nhập</Link>
       </p>
-    </div>
+    </AuthShell>
   );
 }

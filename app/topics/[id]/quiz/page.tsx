@@ -11,7 +11,7 @@ type Question = {
   options: string[];
 };
 
-/** S05 — Lam Quiz (muc 3.3 BA doc): 10 cau trac nghiem 4 lua chon */
+/** S05 — Làm Quiz (mục 3.3 BA doc): 10 câu trắc nghiệm 4 lựa chọn */
 export default function QuizPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -25,7 +25,7 @@ export default function QuizPage() {
     fetch(`/api/user/topics/${id}/quiz`)
       .then(async (r) => {
         const data = await r.json();
-        if (!r.ok) throw new Error(data.error ?? "Khong tai duoc quiz");
+        if (!r.ok) throw new Error(data.error ?? "Không tải được quiz");
         setQuestions(data.questions);
       })
       .catch((e: Error) => setError(e.message));
@@ -37,7 +37,7 @@ export default function QuizPage() {
 
   function select(option: string) {
     setAnswers((a) => ({ ...a, [q.wordId]: option }));
-    // Tu dong chuyen cau tiep theo
+    // Tự động chuyển câu tiếp theo
     if (current < questions.length - 1) {
       setTimeout(() => setCurrent((c) => c + 1), 250);
     }
@@ -54,7 +54,7 @@ export default function QuizPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Nop bai that bai");
+      if (!res.ok) throw new Error(data.error ?? "Nộp bài thất bại");
       router.push(`/topics/${id}/quiz/result`);
     } catch (e) {
       setError((e as Error).message);
@@ -65,51 +65,92 @@ export default function QuizPage() {
   if (error) {
     return (
       <Shell id={id}>
-        <p className="rounded-lg bg-red-50 p-4 text-sm text-red-700">{error}</p>
+        <p className="animate-scale-in rounded-xl bg-red-50 p-4 text-sm font-medium text-red-700 ring-1 ring-red-200">
+          {error}
+        </p>
       </Shell>
     );
   }
-  if (!q) return <Shell id={id}><p className="text-center text-gray-400">Dang tao de quiz...</p></Shell>;
+  if (!q) {
+    return (
+      <Shell id={id}>
+        <div className="flex flex-col items-center gap-3 py-16 text-gray-400">
+          <span className="h-8 w-8 animate-spin-slow rounded-full border-2 border-brand-200 border-t-brand-500" />
+          Đang tạo đề quiz...
+        </div>
+      </Shell>
+    );
+  }
 
   return (
     <Shell id={id}>
       <div className="mb-2 flex items-center justify-between text-sm text-gray-500">
-        <span>Cau {current + 1} / {questions.length}</span>
-        <span>Da tra loi: {answeredCount}/{questions.length}</span>
+        <span className="font-semibold">Câu {current + 1} / {questions.length}</span>
+        <span>Đã trả lời: {answeredCount}/{questions.length}</span>
       </div>
-      <div className="mb-6 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
-        <div className="h-full bg-brand-600 transition-all"
+      <div className="mb-6 h-2 w-full overflow-hidden rounded-full bg-gray-200">
+        <div className="h-full rounded-full bg-brand-gradient transition-all duration-500"
           style={{ width: `${(answeredCount / questions.length) * 100}%` }} />
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-gray-500">Nghia cua tu sau la gi?</p>
-        <h2 className="mt-1 text-2xl font-bold">{q.prompt}</h2>
-        {q.pronunciation && <p className="text-gray-400">{q.pronunciation}</p>}
+      <div key={q.wordId} className="animate-scale-in rounded-3xl border border-gray-100 bg-white p-6 shadow-soft">
+        <p className="text-sm text-gray-500">Nghĩa của từ sau là gì?</p>
+        <h2 className="mt-1 text-2xl font-extrabold">{q.prompt}</h2>
+        {q.pronunciation && <p className="text-brand-500">{q.pronunciation}</p>}
 
         <div className="mt-5 space-y-2">
-          {q.options.map((opt) => (
-            <button key={opt} onClick={() => select(opt)}
-              className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition ${answers[q.wordId] === opt ? "border-brand-600 bg-brand-50 font-medium" : "border-gray-200 hover:bg-gray-50"}`}>
-              {opt}
-            </button>
-          ))}
+          {q.options.map((opt, i) => {
+            const selected = answers[q.wordId] === opt;
+            return (
+              <button
+                key={opt}
+                onClick={() => select(opt)}
+                className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-all ${
+                  selected
+                    ? "scale-[1.02] border-brand-500 bg-brand-50 font-semibold shadow-soft"
+                    : "border-gray-200 hover:-translate-y-0.5 hover:border-brand-200 hover:bg-gray-50"
+                }`}
+              >
+                <span
+                  className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold ${
+                    selected ? "bg-brand-gradient text-white" : "bg-gray-100 text-gray-500"
+                  }`}
+                >
+                  {String.fromCharCode(65 + i)}
+                </span>
+                {opt}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Dieu huong cau hoi */}
+      {/* Điều hướng câu hỏi */}
       <div className="mt-4 flex flex-wrap justify-center gap-1.5">
         {questions.map((qq, i) => (
-          <button key={qq.wordId} onClick={() => setCurrent(i)}
-            className={`h-8 w-8 rounded-full text-xs font-medium ${i === current ? "bg-brand-600 text-white" : answers[qq.wordId] ? "bg-brand-100 text-brand-700" : "bg-gray-100 text-gray-500"}`}>
+          <button
+            key={qq.wordId}
+            onClick={() => setCurrent(i)}
+            className={`h-8 w-8 rounded-full text-xs font-semibold transition-all ${
+              i === current
+                ? "scale-110 bg-brand-gradient text-white shadow-glow"
+                : answers[qq.wordId]
+                ? "bg-brand-100 text-brand-700"
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+            }`}
+          >
             {i + 1}
           </button>
         ))}
       </div>
 
-      <button onClick={submit} disabled={!allAnswered || submitting}
-        className="mt-6 w-full rounded-lg bg-brand-600 px-4 py-3 font-medium text-white hover:bg-brand-700 disabled:opacity-40">
-        {submitting ? "Dang cham diem..." : "Nop bai"}
+      <button
+        onClick={submit}
+        disabled={!allAnswered || submitting}
+        className="btn-gradient mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white disabled:opacity-40"
+      >
+        {submitting && <span className="h-4 w-4 animate-spin-slow rounded-full border-2 border-white/40 border-t-white" />}
+        {submitting ? "Đang chấm điểm..." : "Nộp bài"}
       </button>
     </Shell>
   );
@@ -118,7 +159,9 @@ export default function QuizPage() {
 function Shell({ id, children }: { id: string; children: React.ReactNode }) {
   return (
     <div className="mx-auto min-h-screen max-w-md px-4 py-6">
-      <Link href={`/topics/${id}`} className="text-sm text-brand-600 hover:underline">← Thoat quiz</Link>
+      <Link href={`/topics/${id}`} className="text-sm font-medium text-brand-600 hover:underline">
+        ← Thoát quiz
+      </Link>
       <div className="mt-4">{children}</div>
     </div>
   );

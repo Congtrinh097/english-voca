@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { AuthShell, Field } from "@/components/auth";
 
 function ResetForm() {
   const router = useRouter();
@@ -15,7 +16,7 @@ function ResetForm() {
     e.preventDefault();
     setError("");
     if (password !== confirmPassword) {
-      setError("Mat khau xac nhan khong khop");
+      setError("Mật khẩu xác nhận không khớp");
       return;
     }
     setLoading(true);
@@ -27,34 +28,45 @@ function ResetForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Co loi xay ra");
+        setError(data.error ?? "Có lỗi xảy ra");
         return;
       }
       router.push("/login");
     } catch {
-      setError("Co loi xay ra. Kiem tra ket noi mang.");
+      setError("Có lỗi xảy ra. Kiểm tra kết nối mạng.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center px-4 py-10">
-      <h1 className="mb-6 text-2xl font-bold">Dat lai mat khau</h1>
+    <AuthShell>
+      <div className="mb-6 text-center animate-fade-down">
+        <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-brand-gradient text-2xl shadow-glow">
+          🔒
+        </div>
+        <h1 className="text-2xl font-extrabold">Đặt lại mật khẩu</h1>
+        <p className="mt-1 text-sm text-gray-500">Chọn mật khẩu mới cho tài khoản của bạn.</p>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-3">
-        <input type="password" required minLength={8} placeholder="Mat khau moi (toi thieu 8 ky tu)"
-          value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-brand-500 disabled:bg-gray-100" />
-        <input type="password" required placeholder="Xac nhan mat khau moi"
-          value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={loading}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-brand-500 disabled:bg-gray-100" />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button type="submit" disabled={loading || !token}
-          className="w-full rounded-lg bg-brand-600 px-4 py-3 font-medium text-white hover:bg-brand-700 disabled:opacity-50">
-          {loading ? "Dang xu ly..." : "Dat lai mat khau"}
+        <Field type="password" required minLength={8} placeholder="Mật khẩu mới (tối thiểu 8 ký tự)"
+          value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} />
+        <Field type="password" required placeholder="Xác nhận mật khẩu mới"
+          value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={loading} />
+        {error && (
+          <p className="animate-scale-in rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+        )}
+        <button
+          type="submit"
+          disabled={loading || !token}
+          className="btn-gradient flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white disabled:opacity-60"
+        >
+          {loading && <span className="h-4 w-4 animate-spin-slow rounded-full border-2 border-white/40 border-t-white" />}
+          {loading ? "Đang xử lý..." : "Đặt lại mật khẩu"}
         </button>
       </form>
-    </div>
+    </AuthShell>
   );
 }
 

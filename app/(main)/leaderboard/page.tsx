@@ -7,7 +7,7 @@ type Me = Entry;
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
-/** S07 — Leaderboard: bang xep hang Glory Points */
+/** S07 — Bảng xếp hạng Glory Points */
 export default function LeaderboardPage() {
   const [items, setItems] = useState<Entry[]>([]);
   const [me, setMe] = useState<Me | null>(null);
@@ -29,53 +29,81 @@ export default function LeaderboardPage() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="mb-4 text-2xl font-bold">🏆 Bang xep hang</h1>
+      <h1 className="mb-4 flex items-center gap-2 text-2xl font-extrabold">
+        <span className="animate-bounce-soft text-2xl">🏆</span> Bảng xếp hạng
+      </h1>
 
       {me && (
-        <div className="mb-4 flex items-center justify-between rounded-xl bg-brand-600 p-4 text-white">
-          <div className="flex items-center gap-3">
-            <span className="text-xl font-bold">#{me.rank}</span>
-            <Avatar name={me.name} url={me.avatarUrl} />
-            <span className="font-medium">{me.name} (ban)</span>
+        <div className="relative mb-5 overflow-hidden rounded-2xl bg-brand-gradient p-4 text-white shadow-glow animate-scale-in">
+          <div className="absolute -right-6 -top-8 h-24 w-24 rounded-full bg-white/10 blur-xl" />
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-white/20 text-sm font-extrabold">
+                #{me.rank}
+              </span>
+              <Avatar name={me.name} url={me.avatarUrl} ring />
+              <div>
+                <p className="font-semibold leading-tight">{me.name}</p>
+                <p className="text-xs text-white/80">Vị trí của bạn</p>
+              </div>
+            </div>
+            <span className="text-lg font-extrabold">⭐ {me.totalGlory}</span>
           </div>
-          <span className="font-bold">⭐ {me.totalGlory}</span>
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        {items.map((u) => (
-          <div key={u.id}
-            className={`flex items-center justify-between border-b border-gray-100 p-3 last:border-0 ${me?.id === u.id ? "bg-brand-50" : ""}`}>
-            <div className="flex items-center gap-3">
-              <span className="w-8 text-center font-bold text-gray-500">
-                {MEDALS[u.rank - 1] ?? `#${u.rank}`}
-              </span>
-              <Avatar name={u.name} url={u.avatarUrl} />
-              <span className="font-medium">{u.name}</span>
+      <div className="stagger overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card">
+        {items.map((u) => {
+          const top3 = u.rank <= 3;
+          return (
+            <div
+              key={u.id}
+              className={`flex items-center justify-between border-b border-gray-50 p-3 transition-colors last:border-0 hover:bg-gray-50 ${
+                me?.id === u.id ? "bg-brand-50/70" : ""
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span
+                  className={`grid w-9 place-items-center text-center font-extrabold ${
+                    top3 ? "text-xl" : "text-sm text-gray-400"
+                  }`}
+                >
+                  {MEDALS[u.rank - 1] ?? `#${u.rank}`}
+                </span>
+                <Avatar name={u.name} url={u.avatarUrl} />
+                <span className="font-semibold">{u.name}</span>
+              </div>
+              <span className="font-bold text-amber-500">⭐ {u.totalGlory}</span>
             </div>
-            <span className="font-semibold text-amber-600">⭐ {u.totalGlory}</span>
-          </div>
-        ))}
-        {items.length === 0 && <p className="p-6 text-center text-gray-400">Chua co du lieu</p>}
+          );
+        })}
+        {items.length === 0 && (
+          <p className="p-8 text-center text-gray-400">Chưa có dữ liệu</p>
+        )}
       </div>
 
       {hasMore && (
-        <button onClick={() => setPage((p) => p + 1)}
-          className="mt-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium hover:bg-gray-50">
-          Xem them
+        <button
+          onClick={() => setPage((p) => p + 1)}
+          className="mt-4 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:border-brand-200 hover:text-brand-600"
+        >
+          Xem thêm
         </button>
       )}
     </div>
   );
 }
 
-function Avatar({ name, url }: { name: string; url: string | null }) {
+function Avatar({ name, url, ring }: { name: string; url: string | null; ring?: boolean }) {
+  const ringCls = ring ? "ring-2 ring-white/70" : "";
   if (url) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={url} alt={name} className="h-8 w-8 rounded-full object-cover" />;
+    return <img src={url} alt={name} className={`h-9 w-9 rounded-full object-cover ${ringCls}`} />;
   }
   return (
-    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-bold text-gray-600">
+    <div
+      className={`grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-brand-400 to-accent-500 text-sm font-bold text-white ${ringCls}`}
+    >
       {name.charAt(0).toUpperCase()}
     </div>
   );

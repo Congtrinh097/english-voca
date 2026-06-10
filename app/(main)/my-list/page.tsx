@@ -13,12 +13,12 @@ type Item = {
 };
 
 const TABS = [
-  { value: "in_progress", label: "Dang hoc" },
-  { value: "passed", label: "Da pass" },
-  { value: "failed", label: "Chua dat" },
+  { value: "in_progress", label: "Đang học", icon: "📘" },
+  { value: "passed", label: "Đã đạt", icon: "✅" },
+  { value: "failed", label: "Chưa đạt", icon: "🔁" },
 ] as const;
 
-/** S02 — Danh sach hoc (muc 3.5 BA doc): tab In Progress / Passed / Failed */
+/** S02 — Danh sách học (mục 3.5 BA doc): tab Đang học / Đã đạt / Chưa đạt */
 export default function MyListPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [tab, setTab] = useState<string>("in_progress");
@@ -34,44 +34,85 @@ export default function MyListPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold">Danh sach hoc</h1>
+      <h1 className="mb-4 text-2xl font-extrabold">Danh sách học</h1>
 
-      <div className="mb-4 flex gap-2">
+      <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
         {TABS.map((t) => (
-          <button key={t.value} onClick={() => setTab(t.value)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium ${tab === t.value ? "bg-brand-600 text-white" : "bg-white text-gray-600 border border-gray-200"}`}>
+          <button
+            key={t.value}
+            onClick={() => setTab(t.value)}
+            className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
+              tab === t.value
+                ? "scale-105 bg-brand-gradient text-white shadow-glow"
+                : "border border-gray-200 bg-white text-gray-600 hover:border-brand-200 hover:text-brand-600"
+            }`}
+          >
+            <span>{t.icon}</span>
             {t.label}
           </button>
         ))}
       </div>
 
-      {loading && <p className="py-8 text-center text-gray-400">Dang tai...</p>}
-      {!loading && items.length === 0 && (
-        <p className="py-8 text-center text-gray-400">
-          Chua co chu de nao. <Link href="/" className="text-brand-600 hover:underline">Kham pha ngay →</Link>
-        </p>
+      {loading && (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="skeleton h-24 w-full rounded-2xl" />
+          ))}
+        </div>
       )}
 
-      <div className="space-y-3">
-        {items.map((it) => (
-          <div key={it.id} className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4">
-            <div className="min-w-0">
-              <div className="mb-1 flex items-center gap-2">
-                <LevelBadge level={it.topic.level} />
-                <StatusBadge status={it.status} />
+      {!loading && items.length === 0 && (
+        <div className="py-12 text-center animate-fade-up">
+          <div className="mb-3 text-5xl">🗂️</div>
+          <p className="text-gray-500">Chưa có chủ đề nào ở đây.</p>
+          <Link
+            href="/"
+            className="mt-3 inline-flex items-center gap-1 rounded-full bg-brand-gradient px-5 py-2 text-sm font-semibold text-white shadow-glow transition-transform hover:scale-105"
+          >
+            Khám phá ngay →
+          </Link>
+        </div>
+      )}
+
+      <div className="stagger space-y-3">
+        {!loading &&
+          items.map((it) => (
+            <div
+              key={it.id}
+              className="lift flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-card"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex items-center gap-2">
+                  <LevelBadge level={it.topic.level} />
+                  <StatusBadge status={it.status} />
+                </div>
+                <p className="truncate font-bold">{it.topic.title}</p>
+                <p className="text-sm text-gray-500">{it.topic.titleVi}</p>
+                {/* Thanh tiến độ học */}
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+                    <div
+                      className="h-full rounded-full bg-brand-gradient transition-all duration-700"
+                      style={{
+                        width: `${Math.round(
+                          (it.wordsLearnedCount / Math.max(it.topic.wordCount, 1)) * 100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="shrink-0 text-xs text-gray-400">
+                    {it.wordsLearnedCount}/{it.topic.wordCount} từ
+                  </span>
+                </div>
               </div>
-              <p className="truncate font-semibold">{it.topic.title}</p>
-              <p className="text-sm text-gray-500">
-                Da hoc {it.wordsLearnedCount}/{it.topic.wordCount} tu
-              </p>
+              <Link
+                href={it.status === "failed" ? `/topics/${it.topicId}/quiz` : `/topics/${it.topicId}/learn`}
+                className="shrink-0 rounded-xl bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-glow transition-transform hover:scale-105"
+              >
+                {it.status === "failed" ? "Thi lại" : it.status === "passed" ? "Ôn lại" : "Tiếp tục"}
+              </Link>
             </div>
-            <Link
-              href={it.status === "failed" ? `/topics/${it.topicId}/quiz` : `/topics/${it.topicId}/learn`}
-              className="shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
-              {it.status === "failed" ? "Thi lai" : it.status === "passed" ? "On lai" : "Tiep tuc"}
-            </Link>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   );

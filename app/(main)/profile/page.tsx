@@ -26,7 +26,7 @@ type HistoryItem = {
   wordsLearnedCount: number;
 };
 
-/** S08 — Ho so ca nhan: thong tin, lich su hoc, tong Glory, lien ket Google (muc 11.9) */
+/** S08 — Hồ sơ cá nhân: thông tin, lịch sử học, tổng Glory, liên kết Google (mục 11.9) */
 export default function ProfilePage() {
   const [me, setMe] = useState<Me | null>(null);
   const [rank, setRank] = useState<number | null>(null);
@@ -42,89 +42,96 @@ export default function ProfilePage() {
   useEffect(() => { load(); }, [load]);
 
   async function unlinkGoogle() {
-    if (!confirm("Huy lien ket tai khoan Google?")) return;
+    if (!confirm("Hủy liên kết tài khoản Google?")) return;
     const res = await fetch("/api/auth/link-google", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "unlink" }),
     });
     const data = await res.json();
-    setMessage(res.ok ? "Da huy lien ket Google." : data.error);
+    setMessage(res.ok ? "Đã hủy liên kết Google." : data.error);
     load();
   }
 
-  if (!me) return <p className="py-10 text-center text-gray-400">Dang tai...</p>;
+  if (!me) return <p className="py-10 text-center text-gray-400">Đang tải...</p>;
 
   const passedCount = history.filter((h) => h.status === "passed").length;
 
   return (
     <div className="mx-auto max-w-lg">
-      {/* Thong tin */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center">
-        {me.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={me.avatarUrl} alt={me.name} className="mx-auto h-20 w-20 rounded-full object-cover" />
-        ) : (
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-brand-100 text-3xl font-bold text-brand-700">
-            {me.name.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <h1 className="mt-3 text-xl font-bold">{me.name}</h1>
-        <p className="text-sm text-gray-500">{me.email}</p>
-        {!me.emailVerified && (
-          <p className="mt-2 text-xs text-amber-600">⚠ Email chua xac minh — kiem tra hop thu den</p>
-        )}
+      {/* Thông tin */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/60 bg-white p-6 text-center shadow-soft animate-scale-in">
+        <div className="absolute inset-x-0 top-0 h-24 bg-brand-gradient" />
+        <div className="relative">
+          {me.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={me.avatarUrl} alt={me.name} className="mx-auto h-24 w-24 rounded-full object-cover ring-4 ring-white" />
+          ) : (
+            <div className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-brand-400 to-accent-500 text-4xl font-bold text-white ring-4 ring-white">
+              {me.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <h1 className="mt-3 text-xl font-extrabold">{me.name}</h1>
+          <p className="text-sm text-gray-500">{me.email}</p>
+          {!me.emailVerified && (
+            <p className="mt-2 inline-block rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-600 ring-1 ring-amber-200">
+              ⚠ Email chưa xác minh — kiểm tra hộp thư đến
+            </p>
+          )}
 
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          <Stat label="Glory" value={`⭐ ${me.totalGlory}`} />
-          <Stat label="Xep hang" value={rank ? `#${rank}` : "—"} />
-          <Stat label="Da pass" value={String(passedCount)} />
+          <div className="mt-5 grid grid-cols-3 gap-3">
+            <Stat label="Glory" value={`⭐ ${me.totalGlory}`} />
+            <Stat label="Xếp hạng" value={rank ? `#${rank}` : "—"} />
+            <Stat label="Đã đạt" value={String(passedCount)} />
+          </div>
         </div>
       </div>
 
-      {/* Lien ket tai khoan (muc 11.9 BA doc) */}
-      <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-5">
-        <h2 className="mb-2 font-semibold">Lien ket tai khoan</h2>
-        {message && <p className="mb-2 text-sm text-brand-700">{message}</p>}
+      {/* Liên kết tài khoản (mục 11.9 BA doc) */}
+      <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-card animate-fade-up">
+        <h2 className="mb-2 font-bold">Liên kết tài khoản</h2>
+        {message && <p className="mb-2 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700">{message}</p>}
         {me.hasGoogle ? (
           <div className="flex items-center justify-between text-sm">
-            <span>✅ Da lien ket Google</span>
+            <span className="font-medium text-emerald-600">✅ Đã liên kết Google</span>
             {me.hasPassword && (
-              <button onClick={unlinkGoogle} className="text-red-600 hover:underline">Huy lien ket</button>
+              <button onClick={unlinkGoogle} className="font-medium text-red-600 hover:underline">Hủy liên kết</button>
             )}
           </div>
         ) : (
-          <button onClick={() => signIn("google", { callbackUrl: "/profile" })}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50">
-            Lien ket tai khoan Google
+          <button
+            onClick={() => signIn("google", { callbackUrl: "/profile" })}
+            className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md"
+          >
+            Liên kết tài khoản Google
           </button>
         )}
         {me.hasGoogle && !me.hasPassword && (
           <p className="mt-2 text-xs text-gray-400">
-            Dat mat khau (qua Quen mat khau) de co the huy lien ket Google.
+            Đặt mật khẩu (qua Quên mật khẩu) để có thể hủy liên kết Google.
           </p>
         )}
       </div>
 
-      {/* Lich su hoc */}
-      <h2 className="mb-3 mt-6 text-lg font-bold">Lich su hoc</h2>
-      <div className="space-y-3">
+      {/* Lịch sử học */}
+      <h2 className="mb-3 mt-6 text-lg font-bold">Lịch sử học</h2>
+      <div className="stagger space-y-3">
         {history.map((h) => (
-          <div key={h.id} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4">
+          <div key={h.id} className="lift flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 shadow-card">
             <div>
               <div className="mb-1 flex items-center gap-2">
                 <LevelBadge level={h.topic.level} />
                 <StatusBadge status={h.status} />
               </div>
-              <p className="font-medium">{h.topic.title}</p>
+              <p className="font-semibold">{h.topic.title}</p>
               <p className="text-xs text-gray-400">
-                {h.wordsLearnedCount}/{h.topic.wordCount} tu
-                {h.gloryEarned > 0 && ` · +${h.gloryEarned} Glory`}
+                {h.wordsLearnedCount}/{h.topic.wordCount} từ
+                {h.gloryEarned > 0 && <span className="font-medium text-amber-500"> · +{h.gloryEarned} Glory</span>}
               </p>
             </div>
           </div>
         ))}
-        {history.length === 0 && <p className="py-4 text-center text-gray-400">Chua co lich su hoc</p>}
+        {history.length === 0 && <p className="py-4 text-center text-gray-400">Chưa có lịch sử học</p>}
       </div>
     </div>
   );
@@ -132,8 +139,8 @@ export default function ProfilePage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-gray-50 p-3">
-      <p className="font-bold">{value}</p>
+    <div className="rounded-2xl bg-gray-50 p-3 transition-colors hover:bg-brand-50">
+      <p className="font-extrabold">{value}</p>
       <p className="text-xs text-gray-500">{label}</p>
     </div>
   );
