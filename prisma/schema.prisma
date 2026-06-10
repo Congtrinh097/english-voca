@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  learner
+  admin
+}
+
+enum Level {
+  beginner
+  middle
+  master
+}
+
+enum TopicStatus {
+  in_progress
+  passed
+  failed
+}
+
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  email         String    @unique @db.VarChar(255)
+  name          String    @db.VarChar(100)
+  avatarUrl     String?   @map("avatar_url")
+  googleId      String?   @unique @map("google_id") @db.VarChar(255)
+  passwordHash  String?   @map("password_hash")
+  emailVerified Boolean   @default(false) @map("email_verified")
+  authProvider  String    @default("credentials") @map("auth_provider") @db.VarChar(50)
+  lastLoginAt   DateTime? @map("last_login_at")
+  totalGlory    Int       @default(0) @map("total_glory")
+  role          Role      @default(learner)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  userTopics    UserTopic[]
+  quizResults   QuizResult[]
+  resetTokens   PasswordResetToken[]
+  createdTopics Topic[]
+
+  @@index([totalGlory(sort: Desc)])
+  @@map("users")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model Topic {
+  id           String   @id @default(uuid()) @db.Uuid
+  title        String   @db.VarChar(200)
+  titleVi      String   @map("title_vi") @db.VarChar(200)
+  description  String?
+  level        Level
+  gloryReward  Int      @map("glory_reward")
+  thumbnailUrl String?  @map("thumbnail_url")
+  isPublished  Boolean  @default(false) @map("is_published")
+  createdBy    String   @map("created_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  creator     User         @relation(fields: [createdBy], references: [id])
+  words       Word[]
+  userTopics  UserTopic[]
+  quizResults QuizResult[]
+
+  @@index([level])
+  @@index([isPublished])
+  @@map("topics")
+}
+
+model Word {
+  id            String  @id @default(uuid()) @db.Uuid
+  topicId       String  @map("topic_id") @db.Uuid
+  word          String  @db.VarChar(100)
+  pronunciation String? @db.VarChar(200)
+  partOfSpeech  String? @map("part_of_speech") @db.VarChar(50)
+  definition    String
+  example       String
+  meaningVi     String  @map("meaning_vi")
+  audioUrl      String? @map("audio_url")
+  orderIndex    Int     @default(0) @map("order_index")
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+  @@map("words")
+}
+
+model UserTopic {
+  id            String      @id @default(uuid()) @db.Uuid
+  userId        String      @map("user_id") @db.Uuid
+  topicId       String      @map("topic_id") @db.Uuid
+  status        TopicStatus
+  wordsLearned  String[]    @default([]) @map("words_learned") @db.Uuid
+  addedAt       DateTime    @default(now()) @map("added_at")
+  lastStudiedAt DateTime?   @map("last_studied_at")
+  gloryEarned   Int         @default(0) @map("glory_earned")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId])
+  @@map("user_topics")
+}
+
+model QuizResult {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  topicId        String   @map("topic_id") @db.Uuid
+  score          Int
+  totalQuestions Int      @default(10) @map("total_questions")
+  percentage     Decimal  @db.Decimal(5, 2)
+  passed         Boolean
+  answers        Json?
+  takenAt        DateTime @default(now()) @map("taken_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId])
+  @@map("quiz_results")
+}

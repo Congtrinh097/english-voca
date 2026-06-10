@@ -1,0 +1,40 @@
+import NextAuth from "next-auth";
+import { NextResponse } from "next/server";
+import { authConfig } from "@/lib/auth.config";
+
+const { auth } = NextAuth(authConfig);
+
+const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
+
+export default auth((req) => {
+  const { nextUrl } = req;
+  const isLoggedIn = !!req.auth?.user;
+
+  // API routes tu xu ly auth (tra 401/403 JSON thay vi redirect)
+  if (nextUrl.pathname.startsWith("/api")) return NextResponse.next();
+
+  const isPublic = PUBLIC_PATHS.some((p) => nextUrl.pathname.startsWith(p));
+
+  // Chua dang nhap → /login (giu callbackUrl)
+  if (!isLoggedIn && !isPublic) {
+    const loginUrl = new URL("/login", nextUrl);
+    loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // /admin/* chi cho role=admin
+  if (nextUrl.pathname.startsWith("/admin") && req.auth?.user?.role !== "admin") {
+    return NextResponse.redirect(new URL("/", nextUrl));
+  }
+
+  // Da dang nhap ma vao /login → ve trang chu
+  if (isLoggedIn && PUBLIC_PATHS.some((p) => nextUrl.pathname.startsWith(p))) {
+    return NextResponse.redirect(new URL("/", nextUrl));
+  }
+
+  return NextResponse.next();
+});
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|svg|webp)).*)"],
+};
