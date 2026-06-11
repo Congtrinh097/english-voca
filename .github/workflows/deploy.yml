@@ -1,0 +1,88 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # cho phep chay tay tu tab Actions
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: ${{ secrets.GCP_REGION }}
+  SERVICE_NAME: english-voca
+  AR_REPO: english-voca # Artifact Registry repository (docker)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---- Xac thuc voi Google Cloud (Service Account key JSON) ----
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      # ---- Build & push Docker image len Artifact Registry ----
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Build & push image
+        run: |
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE_NAME}:${GITHUB_SHA}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      # ---- Chay Prisma migrations truc tiep vao Supabase ----
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies (for Prisma CLI)
+        run: npm ci
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx prisma migrate deploy
+
+      # ---- Deploy len Cloud Run ----
+      - name: Render service.yaml
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+        run: |
+          envsubst '$SERVICE_NAME $REGION $IMAGE $DATABASE_URL $NEXTAUTH_URL $NEXTAUTH_SECRET $GOOGLE_CLIENT_ID $GOOGLE_CLIENT_SECRET $SMTP_HOST $SMTP_PORT $SMTP_USER $SMTP_PASS $EMAIL_FROM' \
+            < deploy/service.yaml > service.rendered.yaml
+
+      - name: Deploy service
+        run: |
+          gcloud run services replace service.rendered.yaml \
+            --region "$REGION" --project "$PROJECT_ID"
+
+      - name: Allow public access
+        run: |
+          gcloud run services add-iam-policy-binding "$SERVICE_NAME" \
+            --region "$REGION" --project "$PROJECT_ID" \
+            --member=allUsers --role=roles/run.invoker --quiet
+
+      - name: Show service URL
+        run: |
+          gcloud run services describe "$SERVICE_NAME" \
+            --region "$REGION" --project "$PROJECT_ID" \
+            --format='value(status.url)'
