@@ -67,3 +67,6 @@ export const GLORY_BY_LEVEL = {
 
 export const PASS_THRESHOLD = 80; // %
 export const QUIZ_SIZE = 10;
+
+/** Thuong Glory khi xem het flashcard cua mot chu de (1 lan/chu de) */
+export const FLASHCARD_COMPLETE_BONUS = 5;

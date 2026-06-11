@@ -109,6 +109,8 @@ model UserTopic {
   addedAt       DateTime    @default(now()) @map("added_at")
   lastStudiedAt DateTime?   @map("last_studied_at")
   gloryEarned   Int         @default(0) @map("glory_earned")
+  // Thoi diem nhan thuong +5 Glory khi xem het flashcard (null = chua nhan)
+  flashcardBonusAt DateTime? @map("flashcard_bonus_at")
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)

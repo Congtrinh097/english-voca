@@ -53,6 +53,9 @@ export default function LearnPage() {
   const [maxSeen, setMaxSeen] = useState(0);
   const [ttsSupported, setTtsSupported] = useState(true);
   const [autoSpeak, setAutoSpeak] = useState(false);
+  // Thưởng +5 Glory khi xem đến flashcard cuối cùng (1 lần/chủ đề)
+  const [bonusGlory, setBonusGlory] = useState(0);
+  const bonusRequested = useRef(false);
   // Hướng chuyển thẻ gần nhất: 1 = tiến (trượt từ phải), -1 = lùi (trượt từ trái), 0 = mới vào
   const [slideDir, setSlideDir] = useState<0 | 1 | -1>(0);
   const touchStartX = useRef<number | null>(null);
@@ -109,6 +112,21 @@ export default function LearnPage() {
     if (autoSpeak && currentWord) speak(currentWord);
   }, [autoSpeak, currentWord, speak]);
 
+  // Khi đến thẻ cuối cùng: nhận thưởng +5 Glory (server chỉ cộng lần đầu)
+  useEffect(() => {
+    if (!words.length || bonusRequested.current || index !== words.length - 1) return;
+    bonusRequested.current = true;
+    fetch(`/api/user/topics/${id}/flashcard-complete`, { method: "POST" })
+      .then((r) => (r.ok ? r.json() : { gloryAwarded: 0 }))
+      .then((d) => {
+        if (d.gloryAwarded > 0) {
+          setBonusGlory(d.gloryAwarded);
+          setTimeout(() => setBonusGlory(0), 4000);
+        }
+      })
+      .catch(() => {});
+  }, [index, words.length, id]);
+
   async function markLearned() {
     if (!current || learned.has(current.id)) return;
     setLearned((s) => new Set(s).add(current.id));
@@ -126,6 +144,12 @@ export default function LearnPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col px-4 py-6">
+      {/* Toast thưởng Glory khi xem hết flashcard */}
+      {bonusGlory > 0 && (
+        <div className="animate-pop fixed left-1/2 top-6 z-50 -translate-x-1/2 whitespace-nowrap rounded-full bg-amber-50 px-5 py-2 text-sm font-bold text-amber-700 shadow-glow ring-1 ring-amber-200">
+          🎉 +{bonusGlory} Glory — Bạn đã xem hết flashcard!
+        </div>
+      )}
       <div className="mb-4 flex items-center justify-between text-sm">
         <Link href={`/topics/${id}`} className="font-medium text-brand-600 hover:underline">← Thoát</Link>
         <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-500 shadow-sm">

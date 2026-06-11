@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TopicCard, TopicCardData } from "@/components/topic/TopicCard";
+import { rankFor } from "@/lib/glory-rank";
 
 const FILTERS = [
   { value: "all", label: "Tất cả" },
@@ -19,6 +20,7 @@ export default function HomePage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [totalGlory, setTotalGlory] = useState<number | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -26,6 +28,9 @@ export default function HomePage() {
     fetch("/api/topics/suggested")
       .then((r) => (r.ok ? r.json() : { items: [] }))
       .then((d) => setSuggested(d.items ?? []));
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((me) => setTotalGlory(me?.totalGlory ?? null));
   }, []);
 
   const loadTopics = useCallback(
@@ -80,6 +85,17 @@ export default function HomePage() {
           <p className="mt-2 max-w-md text-sm text-white/85">
             Flashcard tương tác, quiz trắc nghiệm và Glory Points giúp bạn ghi nhớ lâu hơn.
           </p>
+          {/* Glory + danh hiệu của người dùng */}
+          {totalGlory !== null && (
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-1.5 text-sm font-bold backdrop-blur-sm ring-1 ring-white/30">
+                ⭐ {totalGlory.toLocaleString("vi-VN")} Glory
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-1.5 text-sm font-bold backdrop-blur-sm ring-1 ring-white/30">
+                {rankFor(totalGlory).emoji} {rankFor(totalGlory).title}
+              </span>
+            </div>
+          )}
         </div>
         <span className="pointer-events-none absolute right-6 top-1/2 hidden -translate-y-1/2 animate-float text-7xl sm:block">
           🚀

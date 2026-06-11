@@ -29,6 +29,7 @@ export default function QuizResultPage() {
   const [result, setResult] = useState<Result | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [confetti, setConfetti] = useState<React.CSSProperties[]>([]);
+  const [showDetail, setShowDetail] = useState(false);
 
   useEffect(() => {
     fetch(`/api/user/topics/${id}/quiz-result`)
@@ -111,31 +112,65 @@ export default function QuizResultPage() {
 
         {result.passed ? (
           <p className="mt-3 inline-block animate-scale-in rounded-full bg-amber-50 px-4 py-1.5 text-sm font-semibold text-amber-700 ring-1 ring-amber-200">
-            ⭐ +{result.topic.gloryReward} Glory (nếu đạt lần đầu)
+            ⭐ +{result.topic.gloryReward} Glory
           </p>
         ) : (
           <p className="mt-3 text-sm text-gray-500">
             Cần ≥ 80% để đạt. Cố lên, bạn có thể thi lại!
           </p>
         )}
+
+        {/* Link mở popup chi tiết đáp án */}
+        {result.answers && (
+          <p className="mt-2">
+            <button
+              onClick={() => setShowDetail(true)}
+              className="text-xs font-medium text-brand-600 underline underline-offset-2 hover:text-brand-700"
+            >
+              Chi tiết
+            </button>
+          </p>
+        )}
       </div>
 
-      {/* Chi tiết từng câu */}
-      {result.answers && (
-        <div className="stagger mt-6 space-y-2">
-          {result.answers.map((a, i) => (
-            <div
-              key={i}
-              className={`rounded-xl border p-3 text-sm ${
-                a.correct ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
-              }`}
-            >
-              <p className="font-semibold">{i + 1}. {a.word}</p>
-              <p className={a.correct ? "text-emerald-700" : "text-red-700"}>
-                Bạn chọn: {a.selected} {a.correct ? "✓" : `✗ — Đáp án: ${a.correctAnswer}`}
-              </p>
+      {/* Popup chi tiết từng câu */}
+      {showDetail && result.answers && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-fade-in"
+          onClick={() => setShowDetail(false)}
+        >
+          <div
+            role="dialog"
+            aria-label="Chi tiết đáp án"
+            className="animate-pop flex max-h-[80vh] w-full max-w-md flex-col rounded-3xl bg-white p-5 shadow-soft"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-bold">Chi tiết đáp án</h2>
+              <button
+                onClick={() => setShowDetail(false)}
+                aria-label="Đóng"
+                className="grid h-8 w-8 place-items-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
+              >
+                ✕
+              </button>
             </div>
-          ))}
+            <div className="space-y-2 overflow-y-auto">
+              {result.answers.map((a, i) => (
+                <div
+                  key={i}
+                  className={`rounded-xl border p-3 text-sm ${
+                    a.correct ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
+                  }`}
+                >
+                  <p className="font-semibold">{i + 1}. {a.word}</p>
+                  <p className={a.correct ? "text-emerald-700" : "text-red-700"}>
+                    Bạn chọn: {a.selected} {a.correct ? "✓" : `✗ — Đáp án: ${a.correctAnswer}`}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -153,6 +188,10 @@ export default function QuizResultPage() {
         <Link href="/my-list"
           className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-center font-semibold transition-all hover:-translate-y-0.5 hover:border-brand-200 hover:text-brand-600 hover:shadow-md">
           📋 Về danh sách học
+        </Link>
+        <Link href="/"
+          className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-center font-semibold transition-all hover:-translate-y-0.5 hover:border-brand-200 hover:text-brand-600 hover:shadow-md">
+          🏠 Về trang chủ
         </Link>
       </div>
     </div>

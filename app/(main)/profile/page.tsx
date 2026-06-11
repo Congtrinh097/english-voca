@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { LevelBadge, StatusBadge } from "@/components/ui/badges";
 import { getSettings, updateSettings } from "@/lib/settings";
+import { nextRank, rankFor } from "@/lib/glory-rank";
 
 type Me = {
   id: string;
@@ -81,6 +82,17 @@ export default function ProfilePage() {
           )}
           <h1 className="mt-3 text-xl font-extrabold">{me.name}</h1>
           <p className="text-sm text-gray-500">{me.email}</p>
+
+          {/* Danh hiệu theo tổng Glory */}
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-4 py-1.5 text-sm font-bold text-brand-700 ring-1 ring-brand-200">
+            {rankFor(me.totalGlory).emoji} {rankFor(me.totalGlory).title}
+          </p>
+          {nextRank(me.totalGlory) && (
+            <p className="mt-1 text-xs text-gray-400">
+              Còn {(nextRank(me.totalGlory)!.min - me.totalGlory).toLocaleString("vi-VN")} Glory để lên hạng{" "}
+              {nextRank(me.totalGlory)!.emoji} {nextRank(me.totalGlory)!.title}
+            </p>
+          )}
           {!me.emailVerified && (
             <p className="mt-2 inline-block rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-600 ring-1 ring-amber-200">
               ⚠ Email chưa xác minh — kiểm tra hộp thư đến
