@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { LevelBadge, StatusBadge } from "@/components/ui/badges";
+import { themeFor } from "@/lib/topic-theme";
 
 type TopicDetail = {
   id: string;
@@ -61,8 +62,18 @@ export default function TopicDetailPage() {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={topic.thumbnailUrl} alt={topic.title} className="h-44 w-full object-cover" />
           ) : (
-            <div className="flex h-44 w-full items-center justify-center bg-brand-gradient-soft text-6xl">
-              <span className="animate-float">📚</span>
+            <div
+              className="relative flex h-44 w-full items-center justify-center overflow-hidden text-6xl"
+              style={{ background: themeFor(topic.id).gradient }}
+            >
+              <span className="absolute -left-8 -top-10 h-32 w-32 rounded-full bg-white/15" />
+              <span className="absolute -bottom-12 -right-6 h-36 w-36 rounded-full bg-white/10" />
+              <span className="absolute right-6 top-4 h-3 w-3 rounded-full bg-white/40" />
+              <span className="absolute bottom-6 left-8 h-2 w-2 rounded-full bg-white/40" />
+              <span className="absolute -bottom-3 right-4 select-none text-8xl opacity-20">
+                {themeFor(topic.id).emoji}
+              </span>
+              <span className="relative animate-float drop-shadow-md">{themeFor(topic.id).emoji}</span>
             </div>
           )}
         </div>

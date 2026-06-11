@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { playApplause, playSad } from "@/lib/sounds";
 
 type AnswerDetail = {
   word: string;
@@ -35,6 +36,13 @@ export default function QuizResultPage() {
       .then(setResult)
       .catch(() => setNotFound(true));
   }, [id]);
+
+  // Âm thanh kết quả: vỗ tay khi đạt, giai điệu buồn khi chưa đạt
+  useEffect(() => {
+    if (!result) return;
+    if (result.passed) playApplause();
+    else playSad();
+  }, [result]);
 
   // Pháo hoa ăn mừng khi đạt
   useEffect(() => {

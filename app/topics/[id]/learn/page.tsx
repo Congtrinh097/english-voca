@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { speakEN, ttsAvailable } from "@/lib/tts";
+import { getSettings } from "@/lib/settings";
 
 type Word = {
   id: string;
@@ -50,12 +52,14 @@ export default function LearnPage() {
   const [flipped, setFlipped] = useState(false);
   const [maxSeen, setMaxSeen] = useState(0);
   const [ttsSupported, setTtsSupported] = useState(true);
+  const [autoSpeak, setAutoSpeak] = useState(false);
   // Hướng chuyển thẻ gần nhất: 1 = tiến (trượt từ phải), -1 = lùi (trượt từ trái), 0 = mới vào
   const [slideDir, setSlideDir] = useState<0 | 1 | -1>(0);
   const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
-    setTtsSupported(typeof window !== "undefined" && "speechSynthesis" in window);
+    setTtsSupported(ttsAvailable());
+    setAutoSpeak(getSettings().autoSpeak);
     Promise.all([
       fetch(`/api/topics/${id}/words`).then((r) => (r.ok ? r.json() : { items: [] })),
       fetch(`/api/topics/${id}`).then((r) => (r.ok ? r.json() : null)),
@@ -96,12 +100,14 @@ export default function LearnPage() {
   }, [go]);
 
   const speak = useCallback((text: string) => {
-    if (!text || !ttsSupported) return;
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
+    if (ttsSupported) speakEN(text);
   }, [ttsSupported]);
+
+  // Tự động phát âm từ vựng khi chuyển sang flashcard mới (tắt được trong Hồ sơ)
+  const currentWord = current?.word;
+  useEffect(() => {
+    if (autoSpeak && currentWord) speak(currentWord);
+  }, [autoSpeak, currentWord, speak]);
 
   async function markLearned() {
     if (!current || learned.has(current.id)) return;
@@ -173,19 +179,6 @@ export default function LearnPage() {
             <p className="mt-2 text-center text-sm italic text-brand-600">
               🤔 &ldquo;{exampleQuestion(current)}&rdquo;
             </p>
-            {ttsSupported && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  speak(`${current.definition}. ${current.example}. ${exampleQuestion(current)}`);
-                }}
-                aria-label="Nghe giải thích và ví dụ"
-                title="Nghe giải thích và ví dụ"
-                className="mt-3 grid h-9 w-9 place-items-center rounded-full bg-gray-100 text-base text-gray-600 transition-all hover:scale-110 hover:bg-gray-200 active:scale-95"
-              >
-                🔉
-              </button>
-            )}
             <p className="absolute bottom-3 text-xs text-gray-300">Chạm để lật thẻ</p>
           </div>
           {/* Mặt sau — tiếng Việt */}

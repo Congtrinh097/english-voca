@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { LevelBadge, StatusBadge } from "@/components/ui/badges";
+import { getSettings, updateSettings } from "@/lib/settings";
 
 type Me = {
   id: string;
@@ -32,6 +33,13 @@ export default function ProfilePage() {
   const [rank, setRank] = useState<number | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [message, setMessage] = useState("");
+  const [autoSpeak, setAutoSpeak] = useState(true);
+
+  useEffect(() => { setAutoSpeak(getSettings().autoSpeak); }, []);
+
+  function toggleAutoSpeak() {
+    setAutoSpeak(updateSettings({ autoSpeak: !autoSpeak }).autoSpeak);
+  }
 
   const load = useCallback(() => {
     fetch("/api/auth/me").then((r) => (r.ok ? r.json() : null)).then(setMe);
@@ -111,6 +119,32 @@ export default function ProfilePage() {
             Đặt mật khẩu (qua Quên mật khẩu) để có thể hủy liên kết Google.
           </p>
         )}
+      </div>
+
+      {/* Cài đặt học tập */}
+      <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-card animate-fade-up">
+        <h2 className="mb-3 font-bold">Cài đặt học tập</h2>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium">🔊 Tự động phát âm flashcard</p>
+            <p className="text-xs text-gray-400">Tự đọc to từ vựng khi chuyển sang thẻ mới ở màn hình học</p>
+          </div>
+          <button
+            role="switch"
+            aria-checked={autoSpeak}
+            aria-label="Tự động phát âm flashcard"
+            onClick={toggleAutoSpeak}
+            className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+              autoSpeak ? "bg-brand-gradient" : "bg-gray-200"
+            }`}
+          >
+            <span
+              className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${
+                autoSpeak ? "left-6" : "left-1"
+              }`}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Lịch sử học */}

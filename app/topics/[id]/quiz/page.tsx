@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { speakEN, ttsAvailable } from "@/lib/tts";
 
 type Question = {
   wordId: string;
@@ -95,7 +96,19 @@ export default function QuizPage() {
 
       <div key={q.wordId} className="min-h-[24rem] flex-1 animate-scale-in rounded-3xl border border-gray-100 bg-white p-6 shadow-soft">
         <p className="text-sm text-gray-500">Nghĩa của từ sau là gì?</p>
-        <h2 className="mt-1 text-2xl font-extrabold">{q.prompt}</h2>
+        <div className="mt-1 flex items-center gap-2">
+          <h2 className="text-2xl font-extrabold">{q.prompt}</h2>
+          {ttsAvailable() && (
+            <button
+              onClick={() => speakEN(q.prompt)}
+              aria-label="Nghe phát âm từ vựng"
+              title="Nghe phát âm từ vựng"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-50 text-base text-brand-700 transition-all hover:scale-110 hover:bg-brand-100 active:scale-95"
+            >
+              🔊
+            </button>
+          )}
+        </div>
         {q.pronunciation && <p className="text-brand-500">{q.pronunciation}</p>}
 
         <div className="mt-5 space-y-2">
