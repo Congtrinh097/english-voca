@@ -93,7 +93,7 @@ export default function QuizPage() {
           style={{ width: `${(answeredCount / questions.length) * 100}%` }} />
       </div>
 
-      <div key={q.wordId} className="animate-scale-in rounded-3xl border border-gray-100 bg-white p-6 shadow-soft">
+      <div key={q.wordId} className="min-h-[24rem] flex-1 animate-scale-in rounded-3xl border border-gray-100 bg-white p-6 shadow-soft">
         <p className="text-sm text-gray-500">Nghĩa của từ sau là gì?</p>
         <h2 className="mt-1 text-2xl font-extrabold">{q.prompt}</h2>
         {q.pronunciation && <p className="text-brand-500">{q.pronunciation}</p>}
@@ -125,8 +125,8 @@ export default function QuizPage() {
         </div>
       </div>
 
-      {/* Điều hướng câu hỏi */}
-      <div className="mt-4 flex flex-wrap justify-center gap-1.5">
+      {/* Điều hướng câu hỏi — luôn nằm sát cạnh dưới màn hình */}
+      <div className="mt-auto flex flex-wrap justify-center gap-1.5 pt-4">
         {questions.map((qq, i) => (
           <button
             key={qq.wordId}
@@ -147,7 +147,7 @@ export default function QuizPage() {
       <button
         onClick={submit}
         disabled={!allAnswered || submitting}
-        className="btn-gradient mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white disabled:opacity-40"
+        className="btn-gradient mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white disabled:opacity-40"
       >
         {submitting && <span className="h-4 w-4 animate-spin-slow rounded-full border-2 border-white/40 border-t-white" />}
         {submitting ? "Đang chấm điểm..." : "Nộp bài"}
@@ -158,11 +158,11 @@ export default function QuizPage() {
 
 function Shell({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <div className="mx-auto min-h-screen max-w-md px-4 py-6">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col px-4 py-6">
       <Link href={`/topics/${id}`} className="text-sm font-medium text-brand-600 hover:underline">
         ← Thoát quiz
       </Link>
-      <div className="mt-4">{children}</div>
+      <div className="mt-4 flex flex-1 flex-col">{children}</div>
     </div>
   );
 }

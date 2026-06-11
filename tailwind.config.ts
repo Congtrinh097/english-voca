@@ -57,6 +57,14 @@ const config: Config = {
           "0%": { opacity: "0", transform: "scale(0.92)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
+        "slide-in-right": {
+          "0%": { opacity: "0", transform: "translateX(90px) rotate(3deg) scale(0.96)" },
+          "100%": { opacity: "1", transform: "translateX(0) rotate(0deg) scale(1)" },
+        },
+        "slide-in-left": {
+          "0%": { opacity: "0", transform: "translateX(-90px) rotate(-3deg) scale(0.96)" },
+          "100%": { opacity: "1", transform: "translateX(0) rotate(0deg) scale(1)" },
+        },
         "pop": {
           "0%": { transform: "scale(0.8)", opacity: "0" },
           "60%": { transform: "scale(1.08)" },
@@ -93,6 +101,8 @@ const config: Config = {
         "fade-up": "fade-up 0.5s ease-out both",
         "fade-down": "fade-down 0.5s ease-out both",
         "scale-in": "scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "slide-in-right": "slide-in-right 0.45s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "slide-in-left": "slide-in-left 0.45s cubic-bezier(0.16, 1, 0.3, 1) both",
         pop: "pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) both",
         float: "float 4s ease-in-out infinite",
         "gradient-x": "gradient-x 6s ease infinite",

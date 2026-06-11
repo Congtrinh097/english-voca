@@ -5,6 +5,9 @@ import type { NextAuthConfig } from "next-auth";
  * Providers day du duoc khai bao trong lib/auth.ts.
  */
 export const authConfig = {
+  // Cho phep chay sau tunnel/proxy (cloudflared, ngrok) va truy cap qua LAN:
+  // base URL duoc suy ra tu host cua request thay vi co dinh
+  trustHost: true,
   pages: {
     signIn: "/login",
   },

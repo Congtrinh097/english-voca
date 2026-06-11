@@ -50,6 +50,8 @@ export default function LearnPage() {
   const [flipped, setFlipped] = useState(false);
   const [maxSeen, setMaxSeen] = useState(0);
   const [ttsSupported, setTtsSupported] = useState(true);
+  // Hướng chuyển thẻ gần nhất: 1 = tiến (trượt từ phải), -1 = lùi (trượt từ trái), 0 = mới vào
+  const [slideDir, setSlideDir] = useState<0 | 1 | -1>(0);
   const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
@@ -70,6 +72,7 @@ export default function LearnPage() {
     (dir: 1 | -1) => {
       setIndex((i) => {
         const next = Math.min(Math.max(i + dir, 0), words.length - 1);
+        if (next !== i) setSlideDir(dir);
         setMaxSeen((m) => Math.max(m, next));
         return next;
       });
@@ -133,7 +136,9 @@ export default function LearnPage() {
       {/* Flashcard: chạm để lật, vuốt để chuyển */}
       <div
         key={current.id}
-        className={`flip-card h-[26rem] min-h-[26rem] w-full animate-scale-in cursor-pointer select-none ${flipped ? "flipped" : ""}`}
+        className={`flip-card flex min-h-[28rem] w-full flex-1 cursor-pointer select-none ${
+          slideDir === 1 ? "animate-slide-in-right" : slideDir === -1 ? "animate-slide-in-left" : "animate-scale-in"
+        } ${flipped ? "flipped" : ""}`}
         onClick={() => setFlipped((f) => !f)}
         onTouchStart={(e) => (touchStartX.current = e.touches[0].clientX)}
         onTouchEnd={(e) => {
@@ -144,7 +149,8 @@ export default function LearnPage() {
           touchStartX.current = null;
         }}
       >
-        <div className="flip-inner relative h-full w-full">
+        {/* Flex item stretch theo chiều cao thẻ — không dùng h-full vì cha có chiều cao không cố định */}
+        <div className="flip-inner relative w-full">
           {/* Mặt trước — tiếng Anh */}
           <div className="flip-face absolute inset-0 flex flex-col items-center justify-center rounded-3xl border border-gray-100 bg-white p-6 shadow-soft">
             <div className="flex items-center gap-2">
@@ -195,8 +201,8 @@ export default function LearnPage() {
         </div>
       </div>
 
-      {/* Điều hướng + đánh dấu */}
-      <div className="mt-6 flex items-center justify-between gap-3">
+      {/* Điều hướng + đánh dấu — luôn nằm sát cạnh dưới màn hình */}
+      <div className="mt-auto flex items-center justify-between gap-3 pt-5">
         <button onClick={() => go(-1)} disabled={index === 0}
           className="grid h-12 w-12 place-items-center rounded-full border border-gray-200 bg-white text-xl font-bold shadow-sm transition-transform hover:scale-105 disabled:opacity-30">
           ‹

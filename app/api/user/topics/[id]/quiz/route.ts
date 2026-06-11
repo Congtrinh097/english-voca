@@ -12,12 +12,17 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const { error, session } = await requireUser();
   if (error) return error;
 
-  const ut = await prisma.userTopic.findUnique({
-    where: { userId_topicId: { userId: session.user.id, topicId: params.id } },
-  });
-  if (!ut) {
-    return NextResponse.json({ error: "Chua bat dau hoc chu de nay" }, { status: 400 });
+  const topic = await prisma.topic.findUnique({ where: { id: params.id } });
+  if (!topic) {
+    return NextResponse.json({ error: "Không tìm thấy chủ đề" }, { status: 404 });
   }
+
+  // Tu dong them vao danh sach hoc neu chua co (lam quiz tuc la dang hoc chu de nay)
+  await prisma.userTopic.upsert({
+    where: { userId_topicId: { userId: session.user.id, topicId: params.id } },
+    update: {},
+    create: { userId: session.user.id, topicId: params.id, status: "in_progress" },
+  });
 
   const words = await prisma.word.findMany({ where: { topicId: params.id } });
   try {
@@ -59,10 +64,12 @@ export async function POST(req: NextRequest, { params }: Params) {
   const passed = percentage >= PASS_THRESHOLD;
 
   const result = await prisma.$transaction(async (tx) => {
-    const ut = await tx.userTopic.findUnique({
+    // Tu dong tao neu chua co — dong bo voi GET (sinh de) o tren
+    const ut = await tx.userTopic.upsert({
       where: { userId_topicId: { userId: session.user.id, topicId: params.id } },
+      update: {},
+      create: { userId: session.user.id, topicId: params.id, status: "in_progress" },
     });
-    if (!ut) throw new Error("NOT_STARTED");
 
     // Chi luu ket qua thi CUOI CUNG (upsert theo user+topic)
     const quizResult = await tx.quizResult.upsert({
@@ -100,14 +107,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     });
 
     return { quizResult, gloryAwarded };
-  }).catch((e: Error) => {
-    if (e.message === "NOT_STARTED") return null;
-    throw e;
   });
-
-  if (!result) {
-    return NextResponse.json({ error: "Chua bat dau hoc chu de nay" }, { status: 400 });
-  }
 
   return NextResponse.json({
     score,

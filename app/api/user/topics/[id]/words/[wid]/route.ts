@@ -12,15 +12,15 @@ export async function PATCH(
 
   const word = await prisma.word.findUnique({ where: { id: params.wid } });
   if (!word || word.topicId !== params.id) {
-    return NextResponse.json({ error: "Khong tim thay tu" }, { status: 404 });
+    return NextResponse.json({ error: "Không tìm thấy từ" }, { status: 404 });
   }
 
-  const ut = await prisma.userTopic.findUnique({
+  // Tu dong them vao danh sach hoc neu chua co (dang hoc flashcard tuc la da bat dau)
+  const ut = await prisma.userTopic.upsert({
     where: { userId_topicId: { userId: session.user.id, topicId: params.id } },
+    update: {},
+    create: { userId: session.user.id, topicId: params.id, status: "in_progress" },
   });
-  if (!ut) {
-    return NextResponse.json({ error: "Chua bat dau hoc chu de nay" }, { status: 400 });
-  }
 
   const updated = await prisma.userTopic.update({
     where: { id: ut.id },
