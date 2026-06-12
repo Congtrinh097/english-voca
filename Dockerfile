@@ -29,6 +29,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Output standalone da bao gom server.js + node_modules toi thieu (ke ca Prisma engines)
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
 USER node
 EXPOSE 3000

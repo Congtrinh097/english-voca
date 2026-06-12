@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
+import { PwaRegister } from "@/components/PwaRegister";
 
 const beVietnam = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
@@ -21,12 +22,25 @@ export const metadata: Metadata = {
     description: "Học từ vựng tiếng Anh theo chủ đề — flashcard, quiz, bảng xếp hạng.",
     type: "website",
   },
+  // PWA trên iOS: chạy fullscreen khi thêm vào màn hình chính
+  appleWebApp: {
+    capable: true,
+    title: "English Voca",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#3b5bfd",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={beVietnam.variable}>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        <PwaRegister />
+        {children}
+      </body>
     </html>
   );
 }
