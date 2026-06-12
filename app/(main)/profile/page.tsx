@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import { LevelBadge, StatusBadge } from "@/components/ui/badges";
 import { getSettings, updateSettings } from "@/lib/settings";
 import { nextRank, rankFor } from "@/lib/glory-rank";
@@ -179,6 +179,14 @@ export default function ProfilePage() {
         ))}
         {history.length === 0 && <p className="py-4 text-center text-gray-400">Chưa có lịch sử học</p>}
       </div>
+
+      {/* Đăng xuất */}
+      <button
+        onClick={() => signOut({ callbackUrl: "/login" })}
+        className="mt-6 w-full rounded-2xl border border-red-100 bg-white px-4 py-3 text-sm font-semibold text-red-600 shadow-card transition-all hover:-translate-y-0.5 hover:border-red-200 hover:bg-red-50 hover:shadow-md"
+      >
+        🚪 Đăng xuất
+      </button>
     </div>
   );
 }
