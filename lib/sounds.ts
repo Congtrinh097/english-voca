@@ -3,66 +3,103 @@
 /**
  * Hiệu ứng âm thanh kết quả quiz, tổng hợp bằng Web Audio API
  * (không cần file asset, hoạt động offline)
+ *
+ * Trình duyệt chặn autoplay: AudioContext khởi tạo ở trạng thái "suspended"
+ * nếu trang chưa có tương tác. Khi đó ta chờ cử chỉ đầu tiên (chạm/click/phím)
+ * rồi mới phát, thay vì phát "câm" rồi đóng context như trước.
  */
 
-function getCtx(): AudioContext | null {
-  if (typeof window === "undefined") return null;
-  const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!AC) return null;
+type Builder = (ctx: AudioContext) => number; // trả về thời lượng (giây)
+
+function playWhenAllowed(build: Builder) {
+  if (typeof window === "undefined") return;
+  const AC =
+    window.AudioContext ??
+    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AC) return;
   const ctx = new AC();
-  // Trình duyệt có thể khởi tạo ở trạng thái suspended nếu chưa có tương tác
-  if (ctx.state === "suspended") void ctx.resume();
-  return ctx;
+
+  const run = () => {
+    const duration = build(ctx);
+    window.setTimeout(() => void ctx.close(), (duration + 0.5) * 1000);
+  };
+
+  if (ctx.state === "running") {
+    run();
+    return;
+  }
+
+  // Thử resume — thành công nếu trang đã từng có tương tác
+  void ctx.resume();
+  window.setTimeout(() => {
+    if (ctx.state === "running") {
+      run();
+      return;
+    }
+    // Vẫn bị chặn: phát ngay khi người dùng tương tác lần đầu
+    const onGesture = () => {
+      cleanup();
+      ctx.resume().then(run).catch(() => void ctx.close());
+    };
+    const cleanup = () => {
+      window.removeEventListener("pointerdown", onGesture);
+      window.removeEventListener("keydown", onGesture);
+      window.removeEventListener("touchstart", onGesture);
+    };
+    window.addEventListener("pointerdown", onGesture, { once: true });
+    window.addEventListener("keydown", onGesture, { once: true });
+    window.addEventListener("touchstart", onGesture, { once: true });
+  }, 150);
 }
 
 /** Tiếng vỗ tay ăn mừng (~2s): nhiều "cú vỗ" là xung nhiễu trắng qua bộ lọc bandpass */
 export function playApplause() {
-  const ctx = getCtx();
-  if (!ctx) return;
-  const master = ctx.createGain();
-  master.gain.value = 0.5;
-  master.connect(ctx.destination);
+  playWhenAllowed((ctx) => {
+    const master = ctx.createGain();
+    master.gain.value = 0.5;
+    master.connect(ctx.destination);
 
-  const claps = 70;
-  for (let i = 0; i < claps; i++) {
-    const start = ctx.currentTime + Math.random() * 1.8;
-    const dur = 0.04 + Math.random() * 0.04;
-    const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let j = 0; j < data.length; j++) {
-      data[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / data.length, 2);
+    const claps = 70;
+    for (let i = 0; i < claps; i++) {
+      const start = ctx.currentTime + Math.random() * 1.8;
+      const dur = 0.04 + Math.random() * 0.04;
+      const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let j = 0; j < data.length; j++) {
+        data[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / data.length, 2);
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass";
+      bp.frequency.value = 900 + Math.random() * 1800;
+      bp.Q.value = 0.8;
+      const g = ctx.createGain();
+      g.gain.value = 0.25 + Math.random() * 0.5;
+      src.connect(bp).connect(g).connect(master);
+      src.start(start);
     }
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    const bp = ctx.createBiquadFilter();
-    bp.type = "bandpass";
-    bp.frequency.value = 900 + Math.random() * 1800;
-    bp.Q.value = 0.8;
-    const g = ctx.createGain();
-    g.gain.value = 0.25 + Math.random() * 0.5;
-    src.connect(bp).connect(g).connect(master);
-    src.start(start);
-  }
-  window.setTimeout(() => void ctx.close(), 2600);
+    return 2.1;
+  });
 }
 
 /** Giai điệu buồn ngắn: 3 nốt đi xuống bằng sóng triangle */
 export function playSad() {
-  const ctx = getCtx();
-  if (!ctx) return;
-  const notes = [392, 330, 262]; // G4 → E4 → C4
-  notes.forEach((freq, i) => {
-    const start = ctx.currentTime + i * 0.35;
-    const osc = ctx.createOscillator();
-    osc.type = "triangle";
-    osc.frequency.value = freq;
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0.0001, start);
-    g.gain.exponentialRampToValueAtTime(0.3, start + 0.04);
-    g.gain.exponentialRampToValueAtTime(0.0001, start + 0.5);
-    osc.connect(g).connect(ctx.destination);
-    osc.start(start);
-    osc.stop(start + 0.55);
+  playWhenAllowed((ctx) => {
+    const notes = [392, 330, 262]; // G4 → E4 → C4
+    notes.forEach((freq, i) => {
+      const start = ctx.currentTime + i * 0.35;
+      const osc = ctx.createOscillator();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(0.3, start + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + 0.5);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.55);
+    });
+    return 1.3;
   });
-  window.setTimeout(() => void ctx.close(), 1800);
 }
