@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 import { PwaRegister } from "@/components/PwaRegister";
+import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 
 const beVietnam = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="vi" className={beVietnam.variable}>
       <body className="font-sans">
         <PwaRegister />
+        <PwaInstallPrompt />
         {children}
       </body>
     </html>
