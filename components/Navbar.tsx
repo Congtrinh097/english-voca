@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react";
 
 const NAV = [
   { href: "/", label: "Trang chủ", icon: "🏠" },
-  { href: "/my-list", label: "Danh sách học", icon: "📖" },
+  { href: "/my-list", label: "Bài học", icon: "📖" },
   { href: "/leaderboard", label: "Xếp hạng", icon: "🏆" },
   { href: "/profile", label: "Hồ sơ", icon: "👤" },
 ];
@@ -23,7 +23,7 @@ export function Navbar({ isAdmin }: { isAdmin?: boolean }) {
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-gradient text-base shadow-glow transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110">
               🎓
             </span>
-            <span className="text-gradient">English App</span>
+            <span className="text-gradient">English Voca</span>
           </Link>
           <nav className="flex items-center gap-1">
             {NAV.map((n) => {

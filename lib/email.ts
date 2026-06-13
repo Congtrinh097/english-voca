@@ -31,7 +31,7 @@ export async function sendResetPasswordEmail(to: string, token: string) {
   const url = `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/reset-password?token=${token}`;
   await sendEmail(
     to,
-    "Dat lai mat khau — English Learning App",
+    "Dat lai mat khau — English Voca",
     `<p>Nhan vao link sau de dat lai mat khau (het han sau 1 gio):</p>
      <p><a href="${url}">${url}</a></p>
      <p>Neu ban khong yeu cau, hay bo qua email nay.</p>`
@@ -42,7 +42,7 @@ export async function sendVerifyEmail(to: string, token: string) {
   const url = `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/api/auth/verify-email/${token}`;
   await sendEmail(
     to,
-    "Xac minh email — English Learning App",
+    "Xac minh email — English Voca",
     `<p>Nhan vao link sau de xac minh tai khoan:</p>
      <p><a href="${url}">${url}</a></p>`
   );

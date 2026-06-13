@@ -13,13 +13,13 @@ const beVietnam = Be_Vietnam_Pro({
 
 export const metadata: Metadata = {
   title: {
-    default: "English Learning App — Học từ vựng theo chủ đề",
-    template: "%s | English Learning App",
+    default: "English Voca — Học từ vựng theo chủ đề",
+    template: "%s | English Voca",
   },
   description:
     "Học từ vựng tiếng Anh theo chủ đề với flashcard tương tác, quiz trắc nghiệm, Glory Points và bảng xếp hạng.",
   openGraph: {
-    title: "English Learning App",
+    title: "English Voca",
     description: "Học từ vựng tiếng Anh theo chủ đề — flashcard, quiz, bảng xếp hạng.",
     type: "website",
   },

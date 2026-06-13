@@ -57,7 +57,7 @@ function LoginForm() {
         <div className="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-2xl bg-brand-gradient text-3xl shadow-glow animate-float">
           🎓
         </div>
-        <h1 className="text-2xl font-extrabold text-gradient">English Learning App</h1>
+        <h1 className="text-2xl font-extrabold text-gradient">English Voca</h1>
         <p className="mt-1 text-sm text-gray-500">Học từ vựng theo chủ đề</p>
       </div>
 

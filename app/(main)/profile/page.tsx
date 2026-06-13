@@ -35,6 +35,7 @@ export default function ProfilePage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [message, setMessage] = useState("");
   const [autoSpeak, setAutoSpeak] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => { setAutoSpeak(getSettings().autoSpeak); }, []);
 
@@ -159,26 +160,53 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Lịch sử học */}
+      {/* Lịch sử học — chỉ hiện 3 mục gần nhất, xem đầy đủ qua popup */}
       <h2 className="mb-3 mt-6 text-lg font-bold">Lịch sử học</h2>
       <div className="stagger space-y-3">
-        {history.map((h) => (
-          <div key={h.id} className="lift flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 shadow-card">
-            <div>
-              <div className="mb-1 flex items-center gap-2">
-                <LevelBadge level={h.topic.level} />
-                <StatusBadge status={h.status} />
-              </div>
-              <p className="font-semibold">{h.topic.title}</p>
-              <p className="text-xs text-gray-400">
-                {h.wordsLearnedCount}/{h.topic.wordCount} từ
-                {h.gloryEarned > 0 && <span className="font-medium text-amber-500"> · +{h.gloryEarned} Glory</span>}
-              </p>
-            </div>
-          </div>
+        {history.slice(0, 3).map((h) => (
+          <HistoryCard key={h.id} item={h} />
         ))}
         {history.length === 0 && <p className="py-4 text-center text-gray-400">Chưa có lịch sử học</p>}
       </div>
+      {history.length > 3 && (
+        <button
+          onClick={() => setShowHistory(true)}
+          className="mt-3 w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-brand-600 shadow-card transition-all hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md"
+        >
+          Xem thêm ({history.length - 3})
+        </button>
+      )}
+
+      {/* Popup toàn bộ lịch sử */}
+      {showHistory && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-fade-in"
+          onClick={() => setShowHistory(false)}
+        >
+          <div
+            role="dialog"
+            aria-label="Lịch sử học"
+            className="animate-pop flex max-h-[80vh] w-full max-w-md flex-col rounded-3xl bg-white p-5 shadow-soft"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-bold">Lịch sử học ({history.length})</h2>
+              <button
+                onClick={() => setShowHistory(false)}
+                aria-label="Đóng"
+                className="grid h-8 w-8 place-items-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-3 overflow-y-auto">
+              {history.map((h) => (
+                <HistoryCard key={h.id} item={h} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Đăng xuất */}
       <button
@@ -187,6 +215,26 @@ export default function ProfilePage() {
       >
         🚪 Đăng xuất
       </button>
+    </div>
+  );
+}
+
+function HistoryCard({ item }: { item: HistoryItem }) {
+  return (
+    <div className="lift flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 shadow-card">
+      <div>
+        <div className="mb-1 flex items-center gap-2">
+          <LevelBadge level={item.topic.level} />
+          <StatusBadge status={item.status} />
+        </div>
+        <p className="font-semibold">{item.topic.title}</p>
+        <p className="text-xs text-gray-400">
+          {item.wordsLearnedCount}/{item.topic.wordCount} từ
+          {item.gloryEarned > 0 && (
+            <span className="font-medium text-amber-500"> · +{item.gloryEarned} Glory</span>
+          )}
+        </p>
+      </div>
     </div>
   );
 }
