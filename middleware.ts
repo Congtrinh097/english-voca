@@ -17,9 +17,17 @@ export default auth((req) => {
 
   if (LEGAL_PATHS.some((p) => nextUrl.pathname.startsWith(p))) return NextResponse.next();
 
+  // Landing page public: chua dang nhap thi xem duoc, da dang nhap thi ve trang chu
+  if (nextUrl.pathname === "/welcome") {
+    return isLoggedIn ? NextResponse.redirect(new URL("/", nextUrl)) : NextResponse.next();
+  }
+
   const isPublic = PUBLIC_PATHS.some((p) => nextUrl.pathname.startsWith(p));
 
-  // Chua dang nhap → /login (giu callbackUrl)
+  // Chua dang nhap: trang chu → landing /welcome, trang khac → /login (giu callbackUrl)
+  if (!isLoggedIn && nextUrl.pathname === "/") {
+    return NextResponse.redirect(new URL("/welcome", nextUrl));
+  }
   if (!isLoggedIn && !isPublic) {
     const loginUrl = new URL("/login", nextUrl);
     loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);
@@ -42,6 +50,6 @@ export default auth((req) => {
 export const config = {
   // Loai tru static assets + duong dan PWA (sw.js, manifest, icon) khoi auth redirect
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.webmanifest|pwa-icon|apple-icon|icon|.*\\.(?:png|jpg|svg|webp)).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.webmanifest|pwa-icon|apple-icon|icon|.*\\.(?:png|jpg|svg|webp|html)).*)",
   ],
 };
