@@ -5,6 +5,8 @@ import { authConfig } from "@/lib/auth.config";
 const { auth } = NextAuth(authConfig);
 
 const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
+// Trang phap ly: public nhung KHONG redirect ve trang chu khi da dang nhap
+const LEGAL_PATHS = ["/privacy", "/terms"];
 
 export default auth((req) => {
   const { nextUrl } = req;
@@ -12,6 +14,8 @@ export default auth((req) => {
 
   // API routes tu xu ly auth (tra 401/403 JSON thay vi redirect)
   if (nextUrl.pathname.startsWith("/api")) return NextResponse.next();
+
+  if (LEGAL_PATHS.some((p) => nextUrl.pathname.startsWith(p))) return NextResponse.next();
 
   const isPublic = PUBLIC_PATHS.some((p) => nextUrl.pathname.startsWith(p));
 
