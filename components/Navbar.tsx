@@ -61,20 +61,23 @@ export function Navbar({ isAdmin }: { isAdmin?: boolean }) {
         </div>
       </header>
 
-      {/* Thanh tab dưới (mobile) */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-white/60 bg-white/80 backdrop-blur-lg md:hidden">
+      {/* Thanh tab dưới (mobile) — pb theo safe-area cho iPhone co thanh home */}
+      <nav
+        className="fixed inset-x-0 bottom-0 z-20 flex border-t border-white/60 bg-white/80 backdrop-blur-lg md:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         {NAV.map((n) => {
           const active = pathname === n.href;
           return (
             <Link
               key={n.href}
               href={n.href}
-              className={`relative flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors ${
+              className={`relative flex min-h-[64px] flex-1 flex-col items-center justify-center gap-1 px-1 py-2.5 text-[13px] font-medium transition-colors ${
                 active ? "text-brand-600" : "text-gray-500"
               }`}
             >
               <span
-                className={`text-lg transition-transform duration-300 ${
+                className={`text-2xl transition-transform duration-300 ${
                   active ? "-translate-y-0.5 scale-110" : ""
                 }`}
               >
@@ -82,7 +85,7 @@ export function Navbar({ isAdmin }: { isAdmin?: boolean }) {
               </span>
               {n.label}
               {active && (
-                <span className="absolute top-0 h-1 w-8 rounded-full bg-brand-gradient" />
+                <span className="absolute top-0 h-1 w-10 rounded-full bg-brand-gradient" />
               )}
             </Link>
           );
