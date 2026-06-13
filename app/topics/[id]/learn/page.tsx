@@ -146,8 +146,8 @@ export default function LearnPage() {
     <div className="mx-auto flex min-h-screen max-w-md flex-col px-4 py-6">
       {/* Toast thưởng Glory khi xem hết flashcard */}
       {bonusGlory > 0 && (
-        <div className="animate-pop fixed left-1/2 top-6 z-50 -translate-x-1/2 whitespace-nowrap rounded-full bg-amber-50 px-5 py-2 text-sm font-bold text-amber-700 shadow-glow ring-1 ring-amber-200">
-          🎉 +{bonusGlory} Glory — Bạn đã xem hết flashcard!
+        <div className="animate-pop fixed left-1/2 top-6 z-50 max-w-[calc(100vw-2rem)] -translate-x-1/2 text-balance rounded-2xl bg-amber-50 px-5 py-2 text-center text-sm font-bold text-amber-700 shadow-glow ring-1 ring-amber-200">
+          🎉 +{bonusGlory} Glory
         </div>
       )}
       <div className="mb-4 flex items-center justify-between text-sm">

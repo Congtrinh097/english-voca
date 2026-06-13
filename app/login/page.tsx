@@ -121,10 +121,10 @@ function LoginForm() {
 
       <div className="mt-5 flex items-center justify-between text-sm">
         <Link href="/forgot-password" className="font-medium text-brand-600 hover:underline">
-          Quên mật khẩu?
+          Quên mật khẩu
         </Link>
         <Link href="/register" className="font-medium text-brand-600 hover:underline">
-          Chưa có tài khoản? Đăng ký ngay
+          Đăng ký ngay
         </Link>
       </div>
     </AuthShell>
