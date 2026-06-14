@@ -72,20 +72,27 @@ export function Navbar({ isAdmin }: { isAdmin?: boolean }) {
             <Link
               key={n.href}
               href={n.href}
-              className={`relative flex min-h-[64px] flex-1 flex-col items-center justify-center gap-1 px-1 py-2.5 text-[13px] font-medium transition-colors ${
-                active ? "text-brand-600" : "text-gray-500"
-              }`}
+              className="relative flex min-h-[64px] flex-1 items-stretch px-1.5 py-1.5"
             >
+              {/* Cả khối icon + text là vùng chạm, có nền highlight khi active / khi chạm */}
               <span
-                className={`text-2xl transition-transform duration-300 ${
-                  active ? "-translate-y-0.5 scale-110" : ""
+                className={`flex w-full flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[13px] font-medium transition-colors ${
+                  active
+                    ? "bg-brand-50 text-brand-600"
+                    : "text-gray-500 active:bg-gray-100"
                 }`}
               >
-                {n.icon}
+                <span
+                  className={`text-2xl transition-transform duration-300 ${
+                    active ? "-translate-y-0.5 scale-110" : ""
+                  }`}
+                >
+                  {n.icon}
+                </span>
+                {n.label}
               </span>
-              {n.label}
               {active && (
-                <span className="absolute top-0 h-1 w-10 rounded-full bg-brand-gradient" />
+                <span className="absolute top-0 left-1/2 h-1 w-10 -translate-x-1/2 rounded-full bg-brand-gradient" />
               )}
             </Link>
           );
