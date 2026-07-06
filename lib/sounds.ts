@@ -83,6 +83,24 @@ export function playApplause() {
   });
 }
 
+/** Tiếng "ting" ngắn khi trả lời xong 1 câu quiz: 1 nốt sine cao, tắt nhanh */
+export function playTing() {
+  playWhenAllowed((ctx) => {
+    const start = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = 1318.5; // E6
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(0.3, start + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + 0.3);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.32);
+    return 0.35;
+  });
+}
+
 /** Giai điệu buồn ngắn: 3 nốt đi xuống bằng sóng triangle */
 export function playSad() {
   playWhenAllowed((ctx) => {

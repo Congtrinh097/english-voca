@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { speakEN, ttsAvailable } from "@/lib/tts";
+import { playTing } from "@/lib/sounds";
 
 type Question = {
   wordId: string;
@@ -38,6 +39,7 @@ export default function QuizPage() {
 
   function select(option: string) {
     setAnswers((a) => ({ ...a, [q.wordId]: option }));
+    playTing();
     // Tự động chuyển câu tiếp theo
     if (current < questions.length - 1) {
       setTimeout(() => setCurrent((c) => c + 1), 250);
