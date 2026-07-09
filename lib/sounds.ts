@@ -7,12 +7,33 @@
  * Trình duyệt chặn autoplay: AudioContext khởi tạo ở trạng thái "suspended"
  * nếu trang chưa có tương tác. Khi đó ta chờ cử chỉ đầu tiên (chạm/click/phím)
  * rồi mới phát, thay vì phát "câm" rồi đóng context như trước.
+ *
+ * iOS Safari xếp âm thanh Web Audio API vào loại "ambient" nên bị nút gạt
+ * Im lặng (Silent switch) tắt tiếng, kể cả khi phát trong 1 cử chỉ hợp lệ.
+ * Cách duy nhất để bỏ qua nút gạt này là phát 1 thẻ <audio> câm thật sự
+ * (không dùng Web Audio) — việc đó chuyển audio session của trang sang loại
+ * "playback", áp dụng cho mọi âm thanh Web Audio phát sau đó trong phiên.
  */
+
+// WAV 1 mẫu câm (8-bit/8kHz mono) — chỉ dùng để "mở khoá" audio session trên iOS
+const SILENT_WAV =
+  "data:audio/wav;base64,UklGRiUAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQEAAACA";
+
+let iosAudioUnlocked = false;
+function unlockIOSAudioSession() {
+  if (iosAudioUnlocked || typeof window === "undefined") return;
+  iosAudioUnlocked = true;
+  const audio = new Audio(SILENT_WAV);
+  audio.play().catch(() => {
+    iosAudioUnlocked = false; // thử lại ở lần phát sau nếu vẫn bị chặn
+  });
+}
 
 type Builder = (ctx: AudioContext) => number; // trả về thời lượng (giây)
 
 function playWhenAllowed(build: Builder) {
   if (typeof window === "undefined") return;
+  unlockIOSAudioSession();
   const AC =
     window.AudioContext ??
     (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
