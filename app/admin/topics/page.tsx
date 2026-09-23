@@ -13,10 +13,12 @@ type Topic = {
   thumbnailUrl: string | null;
   isPublished: boolean;
   wordCount: number;
+  version: number;
 };
 
 type FormState = {
   id?: string;
+  version?: number;
   title: string;
   titleVi: string;
   description: string;
@@ -33,17 +35,25 @@ export default function AdminTopicsPage() {
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/topics?all=1&page=1");
+    const res = await fetch(`/api/topics?all=1&page=${page}`);
     if (res.ok) {
       const data = await res.json();
       setTopics(data.items);
+      setTotal(data.total);
+      setHasMore(data.hasMore);
     }
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     load();
+    const refresh = () => load();
+    window.addEventListener("admin-data-changed", refresh);
+    return () => window.removeEventListener("admin-data-changed", refresh);
   }, [load]);
 
   async function save(e: React.FormEvent) {
@@ -51,11 +61,11 @@ export default function AdminTopicsPage() {
     setError("");
     setLoading(true);
     try {
-      const { id, ...payload } = form;
+      const { id, version, ...payload } = form;
       const res = await fetch(id ? `/api/topics/${id}` : "/api/topics", {
         method: id ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(id ? { ...payload, expectedVersion: version } : payload),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -64,20 +74,24 @@ export default function AdminTopicsPage() {
       }
       setForm(EMPTY);
       setShowForm(false);
-      load();
+      if (page !== 1) setPage(1); else load();
     } finally {
       setLoading(false);
     }
   }
 
-  async function togglePublish(id: string) {
-    await fetch(`/api/topics/${id}/publish`, { method: "PATCH" });
+  async function togglePublish(topic: Topic) {
+    setError("");
+    const res = await fetch(`/api/topics/${topic.id}/publish`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublished: !topic.isPublished, expectedVersion: topic.version }) });
+    if (!res.ok) { const data = await res.json(); setError(data.error ?? "Không thể đổi trạng thái"); return; }
     load();
   }
 
-  async function remove(id: string) {
+  async function remove(topic: Topic) {
     if (!confirm("Xóa chủ đề này? Toàn bộ từ vựng và kết quả học sẽ bị xóa.")) return;
-    await fetch(`/api/topics/${id}`, { method: "DELETE" });
+    setError("");
+    const res = await fetch(`/api/topics/${topic.id}`, { method: "DELETE", headers: { "X-Expected-Version": String(topic.version) } });
+    if (!res.ok) { const data = await res.json(); setError(data.error ?? "Không thể xóa chủ đề"); return; }
     load();
   }
 
@@ -158,7 +172,7 @@ export default function AdminTopicsPage() {
                   </Link>
                 </td>
                 <td className="px-4 py-3">
-                  <button onClick={() => togglePublish(t.id)}
+                  <button onClick={() => togglePublish(t)}
                     className={`rounded-full px-2.5 py-0.5 text-xs font-semibold transition-transform hover:scale-105 ${
                       t.isPublished
                         ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200"
@@ -168,9 +182,9 @@ export default function AdminTopicsPage() {
                   </button>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button onClick={() => { setForm({ id: t.id, title: t.title, titleVi: t.titleVi, level: t.level, description: t.description ?? "", thumbnailUrl: t.thumbnailUrl ?? "" }); setShowForm(true); }}
+                  <button onClick={() => { setForm({ id: t.id, version: t.version, title: t.title, titleVi: t.titleVi, level: t.level, description: t.description ?? "", thumbnailUrl: t.thumbnailUrl ?? "" }); setShowForm(true); }}
                     className="mr-2 font-medium text-brand-600 hover:underline">Sửa</button>
-                  <button onClick={() => remove(t.id)} className="font-medium text-red-600 hover:underline">Xóa</button>
+                  <button onClick={() => remove(t)} className="font-medium text-red-600 hover:underline">Xóa</button>
                 </td>
               </tr>
             ))}
@@ -179,6 +193,13 @@ export default function AdminTopicsPage() {
             )}
           </tbody>
         </table>
+      </div>
+      <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
+        <span>{total} chủ đề · trang {page}</span>
+        <div className="flex gap-2">
+          <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="rounded-lg border px-3 py-1.5 disabled:opacity-40">← Trước</button>
+          <button disabled={!hasMore} onClick={() => setPage(p => p + 1)} className="rounded-lg border px-3 py-1.5 disabled:opacity-40">Sau →</button>
+        </div>
       </div>
     </div>
   );

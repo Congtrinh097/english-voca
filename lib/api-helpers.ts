@@ -13,7 +13,7 @@ export async function requireUser() {
   // Chong session "mo coi": JWT con han nhung user da bi xoa khoi DB (vd. sau khi seed lai)
   const exists = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true },
+    select: { id: true, role: true },
   });
   if (!exists) {
     return {
@@ -24,6 +24,7 @@ export async function requireUser() {
       session: null,
     };
   }
+  session.user.role = exists.role;
   return { error: null, session };
 }
 

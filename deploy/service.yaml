@@ -43,6 +43,10 @@ spec:
               value: "${SMTP_PASS}"
             - name: EMAIL_FROM
               value: "${EMAIL_FROM}"
+            - name: WEBMCP_MODE
+              value: "${WEBMCP_MODE}"
+            - name: WEBMCP_ORIGIN_TRIAL_TOKEN
+              value: "${WEBMCP_ORIGIN_TRIAL_TOKEN}"
           resources:
             limits:
               cpu: "1"

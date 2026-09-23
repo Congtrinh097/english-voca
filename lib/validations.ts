@@ -28,20 +28,20 @@ export const resetPasswordSchema = z
   });
 
 export const topicSchema = z.object({
-  title: z.string().min(1).max(200),
-  titleVi: z.string().min(1).max(200),
-  description: z.string().optional().nullable(),
+  title: z.string().trim().min(1).max(200),
+  titleVi: z.string().trim().min(1).max(200),
+  description: z.string().max(10000).optional().nullable(),
   level: z.enum(["beginner", "middle", "master"]),
   thumbnailUrl: z.string().url().optional().nullable().or(z.literal("")),
 });
 
 export const wordSchema = z.object({
-  word: z.string().min(1).max(100),
+  word: z.string().trim().min(1).max(100),
   pronunciation: z.string().max(200).optional().nullable(),
   partOfSpeech: z.string().max(50).optional().nullable(),
-  definition: z.string().min(1),
-  example: z.string().min(1),
-  meaningVi: z.string().min(1),
+  definition: z.string().trim().min(1).max(10000),
+  example: z.string().trim().min(1).max(10000),
+  meaningVi: z.string().trim().min(1).max(10000),
   audioUrl: z.string().url().optional().nullable().or(z.literal("")),
   orderIndex: z.number().int().min(0).optional(),
 });

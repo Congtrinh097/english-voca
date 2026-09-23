@@ -13,6 +13,7 @@ type Word = {
   example: string;
   meaningVi: string;
   orderIndex: number;
+  version: number;
 };
 
 const EMPTY = { word: "", pronunciation: "", partOfSpeech: "", definition: "", example: "", meaningVi: "" };
@@ -21,31 +22,44 @@ const EMPTY = { word: "", pronunciation: "", partOfSpeech: "", definition: "", e
 export default function AdminWordsPage() {
   const { id } = useParams<{ id: string }>();
   const [words, setWords] = useState<Word[]>([]);
-  const [form, setForm] = useState<typeof EMPTY & { id?: string }>(EMPTY);
+  const [form, setForm] = useState<typeof EMPTY & { id?: string; version?: number }>(EMPTY);
   const [showForm, setShowForm] = useState(false);
   const [csv, setCsv] = useState("");
   const [csvResult, setCsvResult] = useState("");
   const [preview, setPreview] = useState<Word | null>(null);
   const [flipped, setFlipped] = useState(false);
   const [error, setError] = useState("");
+  const [topicVersion, setTopicVersion] = useState<number>();
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/topics/${id}/words`);
-    if (res.ok) setWords((await res.json()).items);
+    if (res.ok) {
+      const data = await res.json();
+      setWords(data.items);
+      setTopicVersion(data.version);
+    }
   }, [id]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    const refresh = (event: Event) => {
+      const topicId = (event as CustomEvent<{topicId?: string}>).detail?.topicId;
+      if (!topicId || topicId === id) load();
+    };
+    window.addEventListener("admin-data-changed", refresh);
+    return () => window.removeEventListener("admin-data-changed", refresh);
+  }, [id, load]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    const { id: wid, ...payload } = form;
+    const { id: wid, version, ...payload } = form;
     const res = await fetch(
       wid ? `/api/topics/${id}/words/${wid}` : `/api/topics/${id}/words`,
       {
         method: wid ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(wid ? { ...payload, expectedVersion: version } : payload),
       }
     );
     const data = await res.json();
@@ -55,24 +69,40 @@ export default function AdminWordsPage() {
     load();
   }
 
-  async function remove(wid: string) {
+  async function remove(word: Word) {
     if (!confirm("Xóa từ này?")) return;
-    await fetch(`/api/topics/${id}/words/${wid}`, { method: "DELETE" });
+    setError("");
+    const res = await fetch(`/api/topics/${id}/words/${word.id}`, { method: "DELETE", headers: { "X-Expected-Version": String(word.version) } });
+    if (!res.ok) { const data = await res.json(); setError(data.error ?? "Không thể xóa từ"); return; }
     load();
   }
 
   async function importCsv() {
     setCsvResult("");
+    const requestId = crypto.randomUUID();
+    const payload = { csv, dryRun: true, mode: "atomic", expectedVersion: topicVersion };
+    const previewRes = await fetch(`/api/topics/${id}/words/bulk`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Idempotency-Key": requestId },
+      body: JSON.stringify(payload),
+    });
+    const previewData = await previewRes.json();
+    if (!previewRes.ok) { setCsvResult(`Lỗi: ${previewData.error}`); return; }
+    if (previewData.errors.length) {
+      setCsvResult(`Chưa import. Lỗi ${previewData.errors.length} dòng: ${previewData.errors.map((e: { line: number }) => e.line).join(", ")}`);
+      return;
+    }
+    if (!confirm(`Import ${previewData.valid} từ?${previewData.warnings.length ? ` Có ${previewData.warnings.length} cảnh báo trùng.` : ""}`)) return;
     const res = await fetch(`/api/topics/${id}/words/bulk`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ csv }),
+      headers: { "Content-Type": "application/json", "Idempotency-Key": requestId },
+      body: JSON.stringify({ ...payload, dryRun: false }),
     });
     const data = await res.json();
     if (!res.ok) { setCsvResult(`Lỗi: ${data.error}`); return; }
     setCsvResult(
       `Đã import ${data.imported} từ.` +
-      (data.errors.length ? ` Lỗi ${data.errors.length} dòng: ${data.errors.map((e: { line: number }) => e.line).join(", ")}` : "")
+      (data.warnings.length ? ` Có ${data.warnings.length} cảnh báo trùng.` : "")
     );
     setCsv("");
     load();
@@ -191,7 +221,7 @@ export default function AdminWordsPage() {
                     className="mr-2 font-medium text-gray-600 hover:underline">Xem trước</button>
                   <button onClick={() => { setForm({ ...w, pronunciation: w.pronunciation ?? "", partOfSpeech: w.partOfSpeech ?? "" }); setShowForm(true); }}
                     className="mr-2 font-medium text-brand-600 hover:underline">Sửa</button>
-                  <button onClick={() => remove(w.id)} className="font-medium text-red-600 hover:underline">Xóa</button>
+                  <button onClick={() => remove(w)} className="font-medium text-red-600 hover:underline">Xóa</button>
                 </td>
               </tr>
             ))}

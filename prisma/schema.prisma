@@ -61,6 +61,7 @@ model PasswordResetToken {
 }
 
 model Topic {
+  version      Int      @default(1)
   id           String   @id @default(uuid()) @db.Uuid
   title        String   @db.VarChar(200)
   titleVi      String   @map("title_vi") @db.VarChar(200)
@@ -83,6 +84,7 @@ model Topic {
 }
 
 model Word {
+  version       Int     @default(1)
   id            String  @id @default(uuid()) @db.Uuid
   topicId       String  @map("topic_id") @db.Uuid
   word          String  @db.VarChar(100)
@@ -135,4 +137,38 @@ model QuizResult {
 
   @@unique([userId, topicId])
   @@map("quiz_results")
+}
+
+// Retained independently of deleted content for retry resolution and audit.
+model AdminOperation {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String   @map("actor_id") @db.Uuid
+  action    String
+  requestId String   @map("request_id") @db.Uuid
+  inputHash String   @map("input_hash")
+  result    Json
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([actorId, action, requestId])
+  @@index([createdAt])
+  @@map("admin_operations")
+}
+
+model AdminAuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String   @map("actor_id") @db.Uuid
+  action    String
+  entityId  String?  @map("entity_id") @db.Uuid
+  requestId String   @map("request_id") @db.Uuid
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([actorId, createdAt])
+  @@map("admin_audit_logs")
+}
+
+model AdminRateLimit {
+  key       String   @id
+  count     Int
+  resetAt   DateTime @map("reset_at")
+  @@map("admin_rate_limits")
 }

@@ -11,6 +11,8 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "typecheck": "tsc --noEmit"
+    ,"test": "tsx --test tests/admin-import.test.ts tests/webmcp.test.ts"
+    ,"test:db": "tsx --test tests/admin-db.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

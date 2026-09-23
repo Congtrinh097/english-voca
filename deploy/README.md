@@ -62,6 +62,17 @@ Vào **Settings → Secrets and variables → Actions** của repo, tạo:
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth (để trống nếu chưa dùng) |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `EMAIL_FROM` | SMTP (để trống nếu chưa dùng) |
 
+Tạo GitHub Actions variable `WEBMCP_MODE` để điều khiển các công cụ AI trong trang admin:
+
+- `off`: không đăng ký tool (mặc định, phù hợp trước khi chạy migration).
+- `read`: chỉ đọc chủ đề/từ vựng và preview import.
+- `write`: thêm/sửa/import; chưa cho publish hoặc xóa.
+- `all`: bật đủ 12 tool, gồm publish và xóa có xác nhận trên trang admin.
+
+WebMCP dùng `document.modelContext`, session cookie hiện tại và chỉ xuất hiện khi người dùng đăng nhập admin. Chạy migration `20260922120000_admin_webmcp` trước khi chuyển khỏi `off`. Có thể rollback tức thời bằng cách đổi variable về `off` rồi deploy lại revision; bảng audit/idempotency được giữ nguyên.
+
+WebMCP đang ở giai đoạn thử nghiệm của Chrome. Với production, đăng ký origin tại Chrome WebMCP Origin Trial và lưu token vào GitHub secret `WEBMCP_ORIGIN_TRIAL_TOKEN`; middleware sẽ gửi header `Origin-Trial` và `Permissions-Policy: tools=(self)`. Khi phát triển local có thể bật `chrome://flags/#enable-webmcp-testing`, không cần token.
+
 ## Lần deploy đầu tiên
 
 1. Tạo đủ secrets ở trên (`NEXTAUTH_URL` tạm để `https://example.com`)

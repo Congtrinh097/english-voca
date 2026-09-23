@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireUser, requireAdmin } from "@/lib/api-helpers";
-import { topicSchema, GLORY_BY_LEVEL } from "@/lib/validations";
+import { requireUser } from "@/lib/api-helpers";
+import { handleAdminMutation } from "@/lib/admin/http";
+import { z } from "zod";
 import type { Level, Prisma } from "@prisma/client";
 
 const PAGE_SIZE = 12;
@@ -14,7 +15,9 @@ export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const level = sp.get("level");
   const search = sp.get("search")?.trim();
-  const page = Math.max(1, Number(sp.get("page") ?? 1));
+  const parsedPage = z.coerce.number().int().min(1).max(100000).safeParse(sp.get("page") ?? 1);
+  if (!parsedPage.success || (level && !["all","beginner","middle","master"].includes(level))) return NextResponse.json({error:"Bộ lọc không hợp lệ",code:"VALIDATION_ERROR"},{status:400});
+  const page = parsedPage.data;
   const isAdmin = session.user.role === "admin" && sp.get("all") === "1";
 
   const where: Prisma.TopicWhereInput = {
@@ -33,7 +36,7 @@ export async function GET(req: NextRequest) {
   const [items, total] = await Promise.all([
     prisma.topic.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ createdAt: "desc" }, { id: "asc" }],
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
       include: {
@@ -59,30 +62,6 @@ export async function GET(req: NextRequest) {
   });
 }
 
-/** POST /api/topics — [Admin] tao moi */
 export async function POST(req: NextRequest) {
-  const { error, session } = await requireAdmin();
-  if (error) return error;
-
-  const body = await req.json().catch(() => null);
-  const parsed = topicSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.errors[0]?.message ?? "Du lieu khong hop le" },
-      { status: 400 }
-    );
-  }
-
-  const { level, thumbnailUrl, ...rest } = parsed.data;
-  const topic = await prisma.topic.create({
-    data: {
-      ...rest,
-      level,
-      gloryReward: GLORY_BY_LEVEL[level],
-      thumbnailUrl: thumbnailUrl || null,
-      createdBy: session.user.id,
-    },
-  });
-
-  return NextResponse.json(topic, { status: 201 });
+  return handleAdminMutation(req,"create_topic");
 }

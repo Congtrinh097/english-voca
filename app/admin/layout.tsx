@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { AdminWebMCPProvider } from "@/components/admin/AdminWebMCPProvider";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen">
+    <AdminWebMCPProvider><div className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-white/60 bg-white/70 backdrop-blur-lg">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <Link href="/admin" className="flex items-center gap-2 font-extrabold">
@@ -25,6 +26,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
-    </div>
+    </div></AdminWebMCPProvider>
   );
 }

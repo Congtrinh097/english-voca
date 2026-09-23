@@ -14,11 +14,38 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: webmcp_test_local
+          POSTGRES_DB: webmcp_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d webmcp_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     permissions:
       contents: read
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install and verify
+        env:
+          DATABASE_URL: postgresql://postgres:webmcp_test_local@127.0.0.1:5432/webmcp_test
+          TEST_DATABASE_URL: postgresql://postgres:webmcp_test_local@127.0.0.1:5432/webmcp_test
+        run: |
+          npm ci
+          npx prisma migrate deploy
+          npm test
+          npm run test:db
+          npm run typecheck
 
       # ---- Xac thuc voi Google Cloud (Service Account key JSON) ----
       - id: auth
@@ -40,14 +67,6 @@ jobs:
           echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
 
       # ---- Chay Prisma migrations truc tiep vao Supabase ----
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies (for Prisma CLI)
-        run: npm ci
-
       - name: Run database migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -66,8 +85,10 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          WEBMCP_MODE: ${{ vars.WEBMCP_MODE || 'off' }}
+          WEBMCP_ORIGIN_TRIAL_TOKEN: ${{ secrets.WEBMCP_ORIGIN_TRIAL_TOKEN }}
         run: |
-          envsubst '$SERVICE_NAME $REGION $IMAGE $DATABASE_URL $NEXTAUTH_URL $NEXTAUTH_SECRET $GOOGLE_CLIENT_ID $GOOGLE_CLIENT_SECRET $SMTP_HOST $SMTP_PORT $SMTP_USER $SMTP_PASS $EMAIL_FROM' \
+          envsubst '$SERVICE_NAME $REGION $IMAGE $DATABASE_URL $NEXTAUTH_URL $NEXTAUTH_SECRET $GOOGLE_CLIENT_ID $GOOGLE_CLIENT_SECRET $SMTP_HOST $SMTP_PORT $SMTP_USER $SMTP_PASS $EMAIL_FROM $WEBMCP_MODE $WEBMCP_ORIGIN_TRIAL_TOKEN' \
             < deploy/service.yaml > service.rendered.yaml
 
       - name: Deploy service
