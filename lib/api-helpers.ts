@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { headers } from "next/headers";
+import { getRemoteMcpConfig } from "@/lib/admin/mode";
 
 export async function requireUser() {
+  const requestHeaders = await headers();
+  const remoteToken = requestHeaders.get("x-remote-mcp-token");
+  const remoteUserId = requestHeaders.get("x-remote-mcp-user-id");
+  const remoteConfig = getRemoteMcpConfig();
+  if (remoteToken && remoteUserId && remoteConfig.token.length >= 32 && remoteToken === remoteConfig.token) {
+    const remoteUser = await prisma.user.findUnique({ where: { id: remoteUserId }, select: { id: true, role: true } });
+    if (remoteUser) return { error: null, session: { user: { id: remoteUser.id, role: remoteUser.role } } as never };
+  }
   const session = await auth();
   if (!session?.user?.id) {
     return {

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "english-voca-local": {
+      "url": "http://localhost:3000/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MCP_REMOTE_TOKEN}"
+      }
+    }
+  }
+}

@@ -73,6 +73,19 @@ WebMCP dùng `document.modelContext`, session cookie hiện tại và chỉ xu�
 
 WebMCP đang ở giai đoạn thử nghiệm của Chrome. Với production, đăng ký origin tại Chrome WebMCP Origin Trial và lưu token vào GitHub secret `WEBMCP_ORIGIN_TRIAL_TOKEN`; middleware sẽ gửi header `Origin-Trial` và `Permissions-Policy: tools=(self)`. Khi phát triển local có thể bật `chrome://flags/#enable-webmcp-testing`, không cần token.
 
+### Kết nối Local Agent qua Remote MCP
+
+Tạo token dài tối thiểu 32 ký tự và cấu hình local:
+
+```env
+WEBMCP_MODE=all
+MCP_REMOTE_TOKEN="thay-bang-token-ngau-nhien"
+MCP_REMOTE_ADMIN_EMAIL="admin@example.com"
+MCP_REMOTE_ALLOWED_ORIGINS="http://localhost:3000"
+```
+
+Import `docs/superpowers/examples/remote-mcp.json` vào Local Agent. Endpoint MCP là `http://localhost:3000/api/mcp`; Agent có thể gọi `tools/list` và `tools/call` bằng bearer token. Không expose endpoint này trực tiếp ra Internet khi chưa có HTTPS và chính sách token phù hợp.
+
 ## Lần deploy đầu tiên
 
 1. Tạo đủ secrets ở trên (`NEXTAUTH_URL` tạm để `https://example.com`)
